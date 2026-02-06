@@ -7,21 +7,22 @@
 
 ## Overview
 
-A machine learning-powered system for predicting infertility risk based on symptoms and health indicators. This project aims to provide accessible reproductive health risk screening for community health workers in Rwanda, enabling early detection and intervention without requiring hospital-level diagnostic equipment.
+A data-driven system for predicting infertility risk based on symptoms and health indicators, designed for **women and couples as end-users**. The goal is to provide accessible reproductive health risk screening and next-step guidance using only symptoms and history that do not require hospital-level diagnostic equipment. The system offers personalized risk predictions and suggestions for what to do next (for example, lifestyle changes, monitoring symptoms, or seeking professional medical care).
 
 **GitHub Repository:** [https://github.com/aimee-annabelle/multi-stage-reproductive-health-risk-prediction](https://github.com/aimee-annabelle/multi-stage-reproductive-health-risk-prediction)
 
 ## Project Description
 
-This MVP focuses on **Stage 1: Infertility Risk Prediction** using symptom-based inputs that can be collected by community health workers. The system uses machine learning models trained on 705 patient records with 11 health indicators to predict infertility risk levels.
+This MVP focuses on **Stage 1: Infertility Risk Prediction** using symptom-based inputs that can be self-reported by women without any specialized medical tools. The system uses a scoring pipeline built from 705 patient records and 11 health indicators to predict infertility risk levels and provide clear, human-readable guidance on appropriate next steps (such as self-care advice, monitoring, or seeking professional care).
 
 ### Key Features
 
 - **Symptom-Based Prediction**: Uses 10 self-reportable symptoms + age (no hospital diagnostics required)
-- **Machine Learning Models**: Logistic Regression and Random Forest with SMOTE balancing
+- **Risk Scoring Pipeline**: Built from a curated dataset of 705 records with 11 indicators
 - **RESTful API**: FastAPI backend with interactive Swagger UI documentation
-- **High Recall**: Optimized to minimize false negatives (critical for healthcare)
-- **Interpretable Results**: Returns risk levels, probabilities, and feature importance
+- **High Recall**: Tuned to minimize false negatives (critical for healthcare)
+- **Interpretable Results**: Returns risk levels, probabilities, and key drivers
+- **Actionable Guidance for Users**: Returns risk levels plus suggested next steps (e.g., self-care guidance, monitoring, or talking to a health professional) rather than providing direct medical diagnoses.
 
 ### Input Features
 
@@ -37,11 +38,9 @@ This MVP focuses on **Stage 1: Infertility Risk Prediction** using symptom-based
 10. Age-Related Factors (Yes/No)
 11. Male Factor (Yes/No)
 
-### Model Performance
+### Validation Summary
 
-- **Best Model**: Random Forest (selected based on recall)
-- **Recall**: Optimized to catch at-risk patients
-- **Training**: SMOTE-balanced data to handle 82/18 class imbalance
+- **Recall**: Tuned to catch at-risk patients
 - **Evaluation**: Accuracy, Precision, Recall, F1-Score, ROC-AUC
 
 ## Project Structure
@@ -59,12 +58,12 @@ multi-stage-reproductive-health-risk-prediction/
 ├── docs/
 │   └── diagrams/               # API designs and Swagger UI screenshots
 ├── ml/
-│   ├── infertility_model.pkl   # Trained ML model
+│   ├── infertility_model.pkl   # Scoring artifact
 │   ├── scaler.pkl              # Feature scaler
 │   ├── feature_names.pkl       # Feature names
-│   └── model_metadata.pkl      # Model metadata
+│   └── model_metadata.pkl      # Scoring metadata
 ├── notebooks/
-│   └── infertility_risk_prediction.ipynb  # ML pipeline notebook
+│   └── infertility_risk_prediction.ipynb  # Pipeline notebook
 ├── requirements.txt            # Python dependencies
 ├── README.md
 └── LICENSE
@@ -105,7 +104,7 @@ multi-stage-reproductive-health-risk-prediction/
    python -c "import fastapi, sklearn, pandas; print('All dependencies installed successfully!')"
    ```
 
-### Training the Model
+### Rebuilding Scoring Artifacts
 
 1. **Open the Jupyter notebook**
 
@@ -116,9 +115,8 @@ multi-stage-reproductive-health-risk-prediction/
 2. **Run all cells** to:
    - Load and explore the dataset
    - Visualize data distributions
-   - Train Logistic Regression and Random Forest models
-   - Evaluate model performance
-   - Save models to `ml/` directory
+   - Build and validate the scoring pipeline
+   - Save artifacts to the `ml/` directory
 
 ### Running the API
 
@@ -132,7 +130,7 @@ multi-stage-reproductive-health-risk-prediction/
    - **Swagger UI (Interactive)**: http://localhost:8000/docs
    - **API Root**: http://localhost:8000
    - **Health Check**: http://localhost:8000/health
-   - **Model Info**: http://localhost:8000/model/info
+   - **Scoring Info**: http://localhost:8000/model/info
 
 ### Testing the API
 
@@ -193,8 +191,8 @@ print(response.json())
 | Method | Endpoint               | Description                            |
 | ------ | ---------------------- | -------------------------------------- |
 | GET    | `/`                    | Root endpoint with API overview        |
-| GET    | `/health`              | Health check for model status          |
-| GET    | `/model/info`          | Model metadata and performance metrics |
+| GET    | `/health`              | Health check for scoring status        |
+| GET    | `/model/info`          | Scoring metadata and performance       |
 | POST   | `/predict/infertility` | Predict infertility risk from symptoms |
 | GET    | `/docs`                | Interactive Swagger UI documentation   |
 
@@ -219,9 +217,10 @@ print(response.json())
 
 ## Designs & Documentation
 
+- **Prototype (Figma)**: https://www.figma.com/design/0fClURC8ZRryDMdNn2CpjZ/multi-stage?node-id=0-1&t=Em188Im0QQF3P6si-1
 - **Swagger UI Screenshots**: See [docs/diagrams/](docs/diagrams/) folder
 - **API Design Mockups**: Interactive documentation at `/docs` endpoint
-- **Model Architecture**: Detailed in Jupyter notebook
+- **Pipeline Details**: Documented in Jupyter notebook
 
 ## Deployment Plan
 
@@ -255,7 +254,7 @@ print(response.json())
 The video demonstration covers:
 
 - Project overview and motivation
-- ML model training process
+- Scoring pipeline development process
 - API functionality demonstration
 - Testing with Swagger UI
 - Real-world use case scenarios
@@ -267,10 +266,10 @@ The video demonstration covers:
 **Source**: Female Infertility Dataset
 **Size**: 705 patient records
 **Features**: 11 health indicators (Age + 10 binary symptom features) + 1 target variable
-**Class Distribution**: 82% at-risk, 18% no-risk (balanced with SMOTE during training)
+**Class Distribution**: 82% at-risk, 18% no-risk
 
 **Why this dataset?**
-This dataset contains symptom-based features that can be self-reported or easily assessed by community health workers without requiring hospital diagnostics. It aligns perfectly with the Stage 1 MVP goal of accessible infertility risk screening.
+This dataset contains symptom-based features that can be self-reported or easily assessed without requiring hospital diagnostics. It aligns with the Stage 1 MVP goal of accessible infertility risk screening for women.
 
 ### Additional Dataset (Reserved for Future Stages)
 
@@ -290,9 +289,7 @@ This dataset contains symptom-based features that can be self-reported or easily
 
 - **Python 3.12**: Core programming language
 - **FastAPI 0.115.0**: Modern web framework for APIs
-- **scikit-learn 1.8.0**: Machine learning models
 - **pandas 2.3.3**: Data manipulation
-- **imbalanced-learn 0.12.4**: SMOTE for class balancing
 - **uvicorn 0.32.0**: ASGI server
 - **Jupyter Notebook**: Interactive development
 
@@ -303,19 +300,19 @@ This dataset contains symptom-based features that can be self-reported or easily
 - [ ] Integrate DHS demographic data for enhanced predictions
 - [ ] Stage 2: Pregnancy complications risk prediction
 - [ ] Stage 3: Maternal health outcomes prediction
-- [ ] Multi-stage ensemble models combining clinical and demographic features
+- [ ] Multi-stage scoring that combines clinical and demographic features
 - [ ] Population-level risk mapping using DHS regional data
 
 ### Technical Improvements
 
-- [ ] Frontend web application for community health workers
+- [ ] Frontend web application for women and couples
 - [ ] Mobile app integration - later (iOS/Android)
 - [ ] User authentication and session management
 - [ ] Prediction history tracking and analytics dashboard
 - [ ] Multi-language support (Kinyarwanda, English, French)
 - [ ] Integration with electronic health records (EHR)
-- [ ] Automated model retraining pipeline with new data
-- [ ] A/B testing framework for model improvements
+- [ ] Automated scoring refresh pipeline with new data
+- [ ] A/B testing framework for scoring improvements
 
 ## Contributing
 
@@ -342,8 +339,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Dataset providers for Female Infertility data
 - Rwanda Ministry of Health for healthcare context
 - ALU (African Leadership University) for academic support
-- Community health workers for domain expertise
+- Community health workers and clinicians for domain expertise
 
 ---
 
-**Note**: This is an MVP (Minimum Viable Product) for Stage 1 of a multi-stage reproductive health prediction system. The system is designed for screening purposes and should not replace professional medical diagnosis.
+**Note**: This is an MVP (Minimum Viable Product) for Stage 1 of a multi-stage reproductive health prediction system. The system is designed for women and couples as an educational and screening support tool. It should not replace professional medical diagnosis, and users should always consult qualified health professionals for medical decisions.

@@ -1,0 +1,5 @@
+# Gitignore additions for notebooks
+*.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.DS_Store
