@@ -39,8 +39,6 @@ Returns API information and available endpoints.
 }
 ```
 
----
-
 ### 2. Health Check
 
 **GET** `/health`
@@ -57,7 +55,6 @@ Check if the API and models are loaded properly.
 }
 ```
 
----
 
 ### 3. Model Information
 
@@ -99,8 +96,6 @@ Get detailed information about the trained model, including performance metrics.
   }
 }
 ```
-
----
 
 ### 4. Predict Infertility Risk (Main Endpoint)
 
@@ -200,7 +195,6 @@ Predict infertility risk based on patient symptoms and health indicators.
 }
 ```
 
----
 
 ## Usage Examples
 

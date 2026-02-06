@@ -249,7 +249,7 @@ print(response.json())
 
 ## Video Demo
 
-**Project Demo Video**: [Link to be added]
+**Project Demo Video**: [Link to video](https://vimeo.com/1162615593/2d04bce8cf)
 
 The video demonstration covers:
 
