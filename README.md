@@ -15,10 +15,27 @@ A data-driven system for predicting infertility risk based on symptoms and healt
 
 This MVP focuses on **Stage 1: Infertility Risk Prediction** using symptom-based inputs that can be self-reported by women without any specialized medical tools. The system uses a scoring pipeline built from 705 patient records and 11 health indicators to predict infertility risk levels and provide clear, human-readable guidance on appropriate next steps (such as self-care advice, monitoring, or seeking professional care).
 
+### Infertility Fusion Model
+
+The infertility module now includes a **dual-branch fusion model** that combines:
+
+- Symptom branch (hospital infertility dataset, strict self-report features only)
+- History branch (DHS infertility dataset, self-reported demographic and reproductive history)
+
+Instead of forcing an unsafe row-level merge across unlinked datasets, the model fuses branch probabilities and produces a 3-class result:
+
+- `no_infertility_risk`
+- `primary_infertility_risk` (infertile-positive and `children_ever_born == 0`)
+- `secondary_infertility_risk` (infertile-positive and `children_ever_born > 0`)
+
+The maternal health dataset is intentionally excluded from infertility modeling.
+
 ### Key Features
 
 - **Symptom-Based Prediction**: Uses 10 self-reportable symptoms + age (no hospital diagnostics required)
 - **Risk Scoring Pipeline**: Built from a curated dataset of 705 records with 11 indicators
+- **Dual-Branch Fusion**: Combines symptom and DHS history models with weighted fusion
+- **3-Class Infertility Output**: No risk, primary risk, and secondary risk
 - **RESTful API**: FastAPI backend with interactive Swagger UI documentation
 - **High Recall**: Tuned to minimize false negatives (critical for healthcare)
 - **Interpretable Results**: Returns risk levels, probabilities, and key drivers
@@ -26,17 +43,27 @@ This MVP focuses on **Stage 1: Infertility Risk Prediction** using symptom-based
 
 ### Input Features
 
-1. Age (18-100 years)
-2. Irregular Menstrual Cycles (Yes/No)
-3. Hormonal Imbalances (Yes/No)
-4. Pelvic Infections (Yes/No)
-5. Endometriosis (Yes/No)
-6. Uterine Fibroids (Yes/No)
-7. Blocked Fallopian Tubes (Yes/No)
-8. Obesity (Yes/No)
-9. Smoking or Alcohol Use (Yes/No)
-10. Age-Related Factors (Yes/No)
-11. Male Factor (Yes/No)
+Required:
+1. `age`
+2. `ever_cohabited` (0/1)
+3. `children_ever_born`
+
+Optional symptom inputs:
+4. `irregular_menstrual_cycles`
+5. `chronic_pelvic_pain`
+6. `history_pelvic_infections`
+7. `hormonal_symptoms`
+8. `early_menopause_symptoms`
+9. `autoimmune_history`
+10. `reproductive_surgery_history`
+
+Optional history inputs:
+11. `bmi`
+12. `smoked_last_12mo`
+13. `alcohol_last_12mo`
+14. `age_at_first_marriage`
+15. `months_since_first_cohabitation`
+16. `months_since_last_sex`
 
 ### Validation Summary
 
@@ -118,6 +145,18 @@ multi-stage-reproductive-health-risk-prediction/
    - Build and validate the scoring pipeline
    - Save artifacts to the `ml/` directory
 
+3. **Build fusion artifacts directly (optional)**
+
+   ```bash
+   python notebooks/07_infertility_fusion_training.py
+   ```
+
+   This creates:
+   - `ml/infertility_v2_symptom_model.pkl`
+   - `ml/infertility_v2_history_model.pkl`
+   - `ml/infertility_v2_metadata.pkl`
+   - `ml/infertility_v2_feature_schema.pkl`
+
 ### Running the API
 
 1. **Start the FastAPI server**
@@ -148,17 +187,11 @@ multi-stage-reproductive-health-risk-prediction/
 curl -X POST "http://localhost:8000/predict/infertility" \
   -H "Content-Type: application/json" \
   -d '{
-    "Age": 32,
-    "Irregular_Menstrual_Cycles": 1,
-    "Hormonal_Imbalances": 1,
-    "Pelvic_Infections": 0,
-    "Endometriosis": 0,
-    "Uterine_Fibroids": 0,
-    "Blocked_Fallopian_Tubes": 0,
-    "Obesity": 0,
-    "Smoking_or_Alcohol": 0,
-    "Age_Related_Factors": 0,
-    "Male_Factor": 0
+    "age": 28,
+    "ever_cohabited": 0,
+    "children_ever_born": 0,
+    "irregular_menstrual_cycles": 1,
+    "chronic_pelvic_pain": 1
   }'
 ```
 
@@ -170,17 +203,11 @@ import requests
 response = requests.post(
     "http://localhost:8000/predict/infertility",
     json={
-        "Age": 32,
-        "Irregular_Menstrual_Cycles": 1,
-        "Hormonal_Imbalances": 1,
-        "Pelvic_Infections": 0,
-        "Endometriosis": 0,
-        "Uterine_Fibroids": 0,
-        "Blocked_Fallopian_Tubes": 0,
-        "Obesity": 0,
-        "Smoking_or_Alcohol": 0,
-        "Age_Related_Factors": 0,
-        "Male_Factor": 0
+        "age": 28,
+        "ever_cohabited": 0,
+        "children_ever_born": 0,
+        "irregular_menstrual_cycles": 1,
+        "chronic_pelvic_pain": 1
     }
 )
 print(response.json())
@@ -193,27 +220,44 @@ print(response.json())
 | GET    | `/`                    | Root endpoint with API overview        |
 | GET    | `/health`              | Health check for scoring status        |
 | GET    | `/model/info`          | Scoring metadata and performance       |
-| POST   | `/predict/infertility` | Predict infertility risk from symptoms |
+| POST   | `/predict/infertility` | Predict infertility risk (symptom-only, history-only, or fused) |
 | GET    | `/docs`                | Interactive Swagger UI documentation   |
 
-## API Response Example
+## Unified Request Example
 
 ```json
 {
-  "prediction": "At Risk",
-  "risk_level": "High Risk",
-  "probability": 0.8542,
-  "confidence": "High Confidence",
-  "message": "Patient shows multiple risk factors for infertility. Medical consultation strongly recommended.",
-  "feature_importance": {
-    "Irregular_Menstrual_Cycles": 0.2341,
-    "Hormonal_Imbalances": 0.1987,
-    "Age": 0.1654,
-    "Endometriosis": 0.1432,
-    "Blocked_Fallopian_Tubes": 0.1234
-  }
+  "age": 31,
+  "ever_cohabited": 0,
+  "children_ever_born": 0,
+  "irregular_menstrual_cycles": 1,
+  "chronic_pelvic_pain": 1,
+  "hormonal_symptoms": 1
 }
 ```
+
+## Unified Response Example
+
+```json
+{
+  "predicted_class": "primary_infertility_risk",
+  "probability_infertile": 0.92129,
+  "probability_primary": 0.92129,
+  "probability_secondary": 0.0,
+  "risk_level": "High Risk",
+  "decision_threshold": 0.505,
+  "assessment_mode": "symptom_only",
+  "models_used": ["symptom"],
+  "top_risk_factors": {
+    "age": 0.235384,
+    "irregular_menstrual_cycles": 0.113469,
+    "chronic_pelvic_pain": 0.047216
+  },
+  "model_version": "2.0.0"
+}
+```
+
+For never-cohabited users (`ever_cohabited=0`), prediction runs on the symptom branch only.
 
 ## Designs & Documentation
 
