@@ -1,5 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap');
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ============================================
    CSS CUSTOM PROPERTIES - DESIGN SYSTEM
@@ -43,7 +43,8 @@
   --color-info: #2196F3;
 
   /* ===== TYPOGRAPHY ===== */
-  --font-family-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-primary: 'Manrope', 'Segoe UI', sans-serif;
+  --font-family-heading: 'Sora', 'Segoe UI', sans-serif;
 
   /* Font Sizes */
   --font-size-xs: 0.75rem;      /* 12px */
