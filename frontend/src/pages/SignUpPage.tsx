@@ -95,6 +95,7 @@ export default function SignUpPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
+                  minLength={8}
                 />
                 <svg className="input-icon" viewBox="0 0 24 24" aria-hidden>
                   <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" fill="none" stroke="currentColor" strokeWidth="1.8" />
