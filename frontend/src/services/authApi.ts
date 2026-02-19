@@ -10,7 +10,7 @@ export type AuthResponse = {
   user: AuthUser
 }
 
-const API_BASE = import.meta.env.VITE_API_URL?.toString().trim() || 'http://localhost:8000'
+const API_BASE = (import.meta.env.VITE_API_URL || '').trim() || 'http://localhost:8000'
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_AUTH !== 'false'
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
