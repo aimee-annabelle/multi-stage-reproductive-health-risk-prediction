@@ -30,7 +30,7 @@ const initialFormValues: StageFormValues = {
     symptoms: '',
   },
   pregnancy: {
-    currentWeek: 'Week 1-40',
+    currentWeek: '20',
     systolicBP: '120',
     diastolicBP: '80',
     symptoms: '',
