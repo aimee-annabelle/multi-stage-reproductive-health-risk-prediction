@@ -90,7 +90,7 @@ export default function SignInPage() {
 
             <div className="auth-row">
               <span>Remember me</span>
-              <a className="auth-link" href="#">Forgot password?</a>
+              <button type="button" className="auth-link" disabled>Forgot password?</button>
             </div>
 
             {error ? <p className="auth-error">{error}</p> : null}
