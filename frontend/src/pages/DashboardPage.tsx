@@ -250,7 +250,7 @@ export default function DashboardPage() {
         <div className="dashboard-shell dashboard-shell-footer">
           <div className="dashboard-brand"><span className="dashboard-brand-mark" aria-hidden>✧</span><span>Natalis AI</span></div>
           <p>© 2026 Natalis AI Inc. HIPAA Compliant & GDPR Secure.</p>
-          <div className="footer-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Support</a></div>
+          <div className="footer-links"><span>Privacy</span><span>Terms</span><span>Support</span></div>
         </div>
       </footer>
     </div>
