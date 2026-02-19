@@ -24,7 +24,6 @@ async function mockLogin(email: string, fullName = 'Sarah') {
       id: 'user-1',
       fullName,
       email,
-      avatarUrl: 'https://i.pravatar.cc/100?img=32',
     },
   } satisfies AuthResponse
 }
