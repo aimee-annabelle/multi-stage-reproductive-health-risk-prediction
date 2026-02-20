@@ -10,6 +10,20 @@ export type AuthResponse = {
   user: AuthUser
 }
 
+type BackendAuthUser = {
+  id: number
+  full_name: string
+  email: string
+  created_at: string
+}
+
+type BackendAuthResponse = {
+  access_token: string
+  token_type: string
+  expires_in: number
+  user: BackendAuthUser
+}
+
 const API_BASE = (import.meta.env.VITE_API_URL || '').trim() || 'http://localhost:8000'
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_AUTH !== 'false'
 
@@ -28,6 +42,30 @@ async function mockLogin(email: string, fullName = 'Sarah') {
   } satisfies AuthResponse
 }
 
+function mapBackendAuthResponse(payload: BackendAuthResponse): AuthResponse {
+  return {
+    token: payload.access_token,
+    user: {
+      id: String(payload.user.id),
+      fullName: payload.user.full_name,
+      email: payload.user.email,
+    },
+  }
+}
+
+async function parseApiError(response: Response, fallbackMessage: string): Promise<never> {
+  let message = fallbackMessage
+  try {
+    const body = (await response.json()) as { detail?: string }
+    if (typeof body?.detail === 'string' && body.detail.trim()) {
+      message = body.detail
+    }
+  } catch {
+    // Ignore response parsing errors and use fallback.
+  }
+  throw new Error(message)
+}
+
 export async function loginRequest(email: string, password: string): Promise<AuthResponse> {
   if (USE_MOCK) {
     if (!email || !password) {
@@ -43,10 +81,11 @@ export async function loginRequest(email: string, password: string): Promise<Aut
   })
 
   if (!response.ok) {
-    throw new Error('Unable to login. Please verify your credentials.')
+    await parseApiError(response, 'Unable to login. Please verify your credentials.')
   }
 
-  return (await response.json()) as AuthResponse
+  const payload = (await response.json()) as BackendAuthResponse
+  return mapBackendAuthResponse(payload)
 }
 
 export async function signupRequest(fullName: string, email: string, password: string): Promise<AuthResponse> {
@@ -57,15 +96,16 @@ export async function signupRequest(fullName: string, email: string, password: s
     return mockLogin(email, fullName)
   }
 
-  const response = await fetch(`${API_BASE}/auth/register`, {
+  const response = await fetch(`${API_BASE}/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fullName, email, password }),
+    body: JSON.stringify({ full_name: fullName, email, password }),
   })
 
   if (!response.ok) {
-    throw new Error('Unable to create account right now.')
+    await parseApiError(response, 'Unable to create account right now.')
   }
 
-  return (await response.json()) as AuthResponse
+  const payload = (await response.json()) as BackendAuthResponse
+  return mapBackendAuthResponse(payload)
 }

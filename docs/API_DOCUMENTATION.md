@@ -11,11 +11,16 @@ This document provides comprehensive documentation for the FastAPI-based inferti
 
 ## Authentication
 
-Currently, the API does not require authentication. For production deployment, consider implementing:
+The API now supports token-based authentication for user accounts:
 
-- API key authentication
-- OAuth2 with JWT tokens
-- Rate limiting per client
+- `POST /auth/signup` to create a new account
+- `POST /auth/login` to authenticate and receive a bearer token
+- `GET /auth/me` to fetch the current authenticated user
+- `POST /auth/logout` to invalidate the current bearer token
+
+Use the token in requests:
+
+`Authorization: Bearer <access_token>`
 
 ## API Endpoints
 
@@ -34,6 +39,10 @@ Returns API information and available endpoints.
     "predict": "/predict/infertility",
     "health": "/health",
     "model_info": "/model/info",
+    "signup": "/auth/signup",
+    "login": "/auth/login",
+    "me": "/auth/me",
+    "logout": "/auth/logout",
     "docs": "/docs"
   }
 }
