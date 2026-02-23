@@ -1,0 +1,27 @@
+{
+  "model_path": "ml/infertility_model_tuned.pkl",
+  "roc_auc_test": 0.9661637931034484,
+  "pr_auc_test": 0.9924210538316609,
+  "cross_validation_summary": {
+    "test_accuracy": {
+      "mean": 0.9034501347708895,
+      "std": 0.021383326913264302
+    },
+    "test_precision": {
+      "mean": 0.9194684629791012,
+      "std": 0.02051054210866665
+    },
+    "test_recall": {
+      "mean": 0.9677893611333868,
+      "std": 0.014940591940638482
+    },
+    "test_f1": {
+      "mean": 0.9428559656468638,
+      "std": 0.012206203869910589
+    },
+    "test_roc_auc": {
+      "mean": 0.9221049817808356,
+      "std": 0.02762886348242599
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "engineered_dataset_path": "data/processed/infertility_features_v1.csv",
+  "n_rows": 705,
+  "n_columns": 15,
+  "model_features": [
+    "Age",
+    "Irregular_Menstrual_Cycles",
+    "Tubal_Issues_Risk",
+    "Chronic_Pelvic_Pain",
+    "Uterine_Issues_Risk",
+    "History_Pelvic_Infections",
+    "Hormonal_Symptoms",
+    "Early_Menopause_Risk",
+    "Autoimmune_History",
+    "Reproductive_Surgery_History",
+    "Unexplained_Difficulty_Conceiving"
+  ],
+  "additional_engineered_features": [
+    "Symptom_Burden_Score",
+    "Age_x_Symptom_Burden"
+  ],
+  "target": "Infertility_Prediction"
+}

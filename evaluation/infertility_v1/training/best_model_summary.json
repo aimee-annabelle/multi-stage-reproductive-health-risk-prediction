@@ -1,0 +1,24 @@
+{
+  "model_name": "GradientBoosting",
+  "accuracy": 0.943502824858757,
+  "precision": 0.9470198675496688,
+  "recall": 0.9862068965517241,
+  "f1_score": 0.9662162162162162,
+  "roc_auc": 0.974353448275862,
+  "features": [
+    "Age",
+    "Irregular_Menstrual_Cycles",
+    "Tubal_Issues_Risk",
+    "Chronic_Pelvic_Pain",
+    "Uterine_Issues_Risk",
+    "History_Pelvic_Infections",
+    "Hormonal_Symptoms",
+    "Early_Menopause_Risk",
+    "Autoimmune_History",
+    "Reproductive_Surgery_History",
+    "Unexplained_Difficulty_Conceiving"
+  ],
+  "training_date": "2026-02-23",
+  "training_samples": 528,
+  "test_samples": 177
+}
