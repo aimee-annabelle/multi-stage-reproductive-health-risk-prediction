@@ -9,15 +9,46 @@ Unified FastAPI documentation for infertility risk prediction using a cohabitati
 - Local: `http://localhost:8000`
 - Production: `[To be deployed]`
 
-## Endpoints
+## Authentication
+
+The API now supports token-based authentication for user accounts:
+
+- `POST /auth/signup` to create a new account
+- `POST /auth/login` to authenticate and receive a bearer token
+- `GET /auth/me` to fetch the current authenticated user
+- `POST /auth/logout` to invalidate the current bearer token
+
+Use the token in requests:
+
+`Authorization: Bearer <access_token>`
+
+## API Endpoints
 
 ### 1. Root
 
 **GET** `/`
 
-Returns API overview.
+Returns API information and available endpoints.
 
-### 2. Health
+**Response (200 OK)**:
+
+```json
+{
+  "message": "Reproductive Health Risk Prediction API",
+  "endpoints": {
+    "predict": "/predict/infertility",
+    "health": "/health",
+    "model_info": "/model/info",
+    "signup": "/auth/signup",
+    "login": "/auth/login",
+    "me": "/auth/me",
+    "logout": "/auth/logout",
+    "docs": "/docs"
+  }
+}
+```
+
+### 2. Health Check
 
 **GET** `/health`
 

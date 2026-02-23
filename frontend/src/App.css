@@ -1,0 +1,11 @@
+@import './styles/landing.css';
+@import './styles/auth.css';
+@import './styles/dashboard.css';
+
+.route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #4b627f;
+  font-size: 14px;
+}
