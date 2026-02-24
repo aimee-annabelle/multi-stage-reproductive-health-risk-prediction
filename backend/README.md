@@ -1,6 +1,6 @@
 # Backend - Reproductive Health Risk Prediction API
 
-FastAPI backend for infertility and pregnancy risk prediction, plus authenticated maternal follow-up tracking.
+FastAPI backend for infertility, pregnancy, and postpartum risk prediction, plus authenticated maternal follow-up tracking.
 
 ## Current Backend Layout
 
@@ -68,8 +68,10 @@ python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /auth/logout`
 - `GET /model/info`
 - `GET /model/info/pregnancy`
+- `GET /model/info/postpartum`
 - `POST /predict/infertility`
 - `POST /predict/pregnancy`
+- `POST /predict/postpartum`
 - `POST /pregnancy/follow-up/assess`
 - `GET /pregnancy/follow-up/history`
 - `GET /pregnancy/follow-up/compare/latest`

@@ -177,3 +177,63 @@ class PregnancyFollowUpRequest(PregnancyRequest):
         max_length=1000,
         description="Optional follow-up notes for this assessment",
     )
+
+
+class PostpartumRequest(BaseModel):
+    """Request payload for postpartum risk prediction endpoint."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    age_group: str | None = Field(
+        default=None,
+        description="Age group used by training data (for example: Below 25, Above 25)",
+    )
+    baby_age_months: float | None = Field(
+        default=None, ge=0.0, le=24.0, description="Infant age in months"
+    )
+    kgs_gained_during_pregnancy: float | None = Field(
+        default=None, ge=0.0, le=50.0, description="Weight gained during pregnancy (kg)"
+    )
+    marital_status: str | None = None
+    household_income: str | None = None
+    level_of_education: str | None = None
+    residency: str | None = None
+    comorbidities: str | None = None
+
+    smoke_cigarettes: int | str | bool | None = Field(default=None)
+    smoke_shisha: int | str | bool | None = Field(default=None)
+    premature_labour: int | str | bool | None = Field(default=None)
+    healthy_baby: int | str | bool | None = Field(default=None)
+    baby_admitted_nicu: int | str | bool | None = Field(default=None)
+    baby_feeding_difficulties: int | str | bool | None = Field(default=None)
+    pregnancy_problem: int | str | bool | None = Field(default=None)
+    postnatal_problems: int | str | bool | None = Field(default=None)
+    natal_problems: int | str | bool | None = Field(default=None)
+    problems_with_husband: int | str | bool | None = Field(default=None)
+    financial_problems: int | str | bool | None = Field(default=None)
+    family_problems: int | str | bool | None = Field(default=None)
+    had_covid_19: int | str | bool | None = Field(default=None)
+    had_covid_19_vaccine: int | str | bool | None = Field(default=None)
+    access_to_healthcare_services: int | str | bool | None = Field(default=None)
+    aware_of_ppd_symptoms: int | str | bool | None = Field(default=None)
+    experienced_cultural_stigma_ppd: int | str | bool | None = Field(default=None)
+    received_support_or_treatment_ppd: int | str | bool | None = Field(default=None)
+
+    epds_laugh_and_funny_side: str | None = None
+    epds_looked_forward_enjoyment: str | None = None
+    epds_blamed_myself: str | None = None
+    epds_anxious_or_worried: str | None = None
+    epds_scared_or_panicky: str | None = None
+    epds_things_getting_on_top: str | None = None
+    epds_unhappy_difficulty_sleeping: str | None = None
+    epds_sad_or_miserable: str | None = None
+    epds_unhappy_crying: str | None = None
+    epds_thought_of_harming_self: str | None = None
+
+    @model_validator(mode="after")
+    def validate_minimum_signal(self) -> "PostpartumRequest":
+        payload = self.model_dump()
+        has_signal = any(value is not None for value in payload.values())
+        if not has_signal:
+            raise ValueError("Provide at least one postpartum symptom, habit, or context field.")
+        return self

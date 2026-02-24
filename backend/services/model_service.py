@@ -8,6 +8,7 @@ import joblib
 
 _ARTIFACT_CACHE: Dict[str, Any] | None = None
 _PREGNANCY_ARTIFACT_CACHE: Dict[str, Any] | None = None
+_POSTPARTUM_ARTIFACT_CACHE: Dict[str, Any] | None = None
 
 
 def _model_dir() -> Path:
@@ -30,6 +31,15 @@ def _pregnancy_artifact_paths() -> Dict[str, Path]:
         "model": model_dir / "pregnancy_v1_model.pkl",
         "metadata": model_dir / "pregnancy_v1_metadata.pkl",
         "feature_schema": model_dir / "pregnancy_v1_feature_schema.pkl",
+    }
+
+
+def _postpartum_artifact_paths() -> Dict[str, Path]:
+    model_dir = _model_dir()
+    return {
+        "model": model_dir / "postpartum_v1_model.pkl",
+        "metadata": model_dir / "postpartum_v1_metadata.pkl",
+        "feature_schema": model_dir / "postpartum_v1_feature_schema.pkl",
     }
 
 
@@ -104,12 +114,45 @@ def load_pregnancy_artifacts(force_reload: bool = False) -> Dict[str, Any]:
     return _PREGNANCY_ARTIFACT_CACHE
 
 
+def load_postpartum_artifacts(force_reload: bool = False) -> Dict[str, Any]:
+    global _POSTPARTUM_ARTIFACT_CACHE
+
+    if _POSTPARTUM_ARTIFACT_CACHE is not None and not force_reload:
+        return _POSTPARTUM_ARTIFACT_CACHE
+
+    paths = _postpartum_artifact_paths()
+    missing = [name for name, path in paths.items() if not path.exists()]
+    if missing:
+        missing_names = ", ".join(missing)
+        raise FileNotFoundError(
+            f"Missing postpartum v1 artifacts: {missing_names}. "
+            "Run notebooks/run_postpartum_v1_pipeline.py first."
+        )
+
+    model = joblib.load(paths["model"])
+    metadata = joblib.load(paths["metadata"])
+    feature_schema = joblib.load(paths["feature_schema"])
+
+    _POSTPARTUM_ARTIFACT_CACHE = {
+        "model": model,
+        "metadata": metadata,
+        "feature_schema": feature_schema,
+        "paths": {name: str(path) for name, path in paths.items()},
+    }
+
+    return _POSTPARTUM_ARTIFACT_CACHE
+
+
 def get_v2_artifacts() -> Dict[str, Any]:
     return load_v2_artifacts(force_reload=False)
 
 
 def get_pregnancy_artifacts() -> Dict[str, Any]:
     return load_pregnancy_artifacts(force_reload=False)
+
+
+def get_postpartum_artifacts() -> Dict[str, Any]:
+    return load_postpartum_artifacts(force_reload=False)
 
 
 def v2_artifacts_available() -> bool:
@@ -125,6 +168,14 @@ def pregnancy_artifacts_available() -> bool:
         return True
 
     paths = _pregnancy_artifact_paths()
+    return all(path.exists() for path in paths.values())
+
+
+def postpartum_artifacts_available() -> bool:
+    if _POSTPARTUM_ARTIFACT_CACHE is not None:
+        return True
+
+    paths = _postpartum_artifact_paths()
     return all(path.exists() for path in paths.values())
 
 
@@ -169,6 +220,37 @@ def get_pregnancy_model_info() -> Dict[str, Any]:
         "features": metadata.get("features", {}),
         "class_distribution": metadata.get("class_distribution", {}),
         "dropped_rows": metadata.get("dropped_rows", {}),
+        "training_samples": metadata.get("training_samples", {}),
+        "label_mapping": metadata.get("label_mapping", {}),
+        "notes": metadata.get("notes", []),
+    }
+
+
+def get_postpartum_model_info() -> Dict[str, Any]:
+    artifacts = get_postpartum_artifacts()
+    metadata = artifacts["metadata"]
+
+    decision_threshold = float(
+        metadata.get("decision_threshold", metadata.get("threshold", 0.5))
+    )
+    emergency_threshold = float(
+        metadata.get("emergency_threshold", min(0.99, max(0.90, decision_threshold + 0.10)))
+    )
+
+    return {
+        "model_version": metadata.get("model_version", "unknown"),
+        "pipeline_type": metadata.get("pipeline_type", "single_branch_classifier"),
+        "target_name": metadata.get("target_name", "ppd_risk"),
+        "training_date_utc": metadata.get("training_date_utc"),
+        "recall_target": metadata.get("recall_target"),
+        "threshold": decision_threshold,
+        "decision_threshold": decision_threshold,
+        "emergency_threshold": emergency_threshold,
+        "evaluation_metrics": metadata.get("evaluation_metrics", {}),
+        "selected_model_name": metadata.get("selected_model_name"),
+        "best_params": metadata.get("best_params", {}),
+        "features": metadata.get("features", {}),
+        "class_distribution": metadata.get("class_distribution", {}),
         "training_samples": metadata.get("training_samples", {}),
         "label_mapping": metadata.get("label_mapping", {}),
         "notes": metadata.get("notes", []),

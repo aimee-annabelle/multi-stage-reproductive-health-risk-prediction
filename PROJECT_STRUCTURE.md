@@ -19,7 +19,7 @@ multi-stage-reproductive-health-risk-prediction/
 │   │   └── response.py                 # Pydantic response schemas
 │   ├── services/
 │   │   ├── model_service.py            # artifact loading/model info
-│   │   ├── prediction_service.py       # infertility + pregnancy inference
+│   │   ├── prediction_service.py       # infertility + pregnancy + postpartum inference
 │   │   ├── pregnancy_tracking_service.py
 │   │   └── preprocessing_service.py
 │   ├── tests/
@@ -35,14 +35,19 @@ multi-stage-reproductive-health-risk-prediction/
 │   │   ├── Female infertility.csv
 │   │   ├── dhs_cleaned.csv
 │   │   ├── infertility_features_v1.csv
-│   │   └── pregnancy-risk-dataset.csv
+│   │   ├── pregnancy-risk-dataset.csv
+│   │   ├── postpartum_omv_cleaned.csv
+│   │   ├── postpartum_omv_feature_schema.json
+│   │   └── postpartum_omv_data_dictionary.csv
+│   └── raw/
 │   └── dhs_data_cleaning.py
 ├── docs/
 │   ├── API_DOCUMENTATION.md
 │   └── diagrams/
 ├── evaluation/
 │   ├── infertility_v1/
-│   └── pregnancy_v1/
+│   ├── pregnancy_v1/
+│   └── postpartum_v1/
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/
@@ -53,14 +58,19 @@ multi-stage-reproductive-health-risk-prediction/
 ├── ml/
 │   ├── infertility_v2_*.pkl            # Stage 1 production artifacts
 │   ├── pregnancy_v1_*.pkl              # Stage 2 production artifacts
+│   ├── postpartum_v1_*.pkl             # Stage 3 production artifacts
 │   └── infertility_* legacy artifacts
 ├── notebooks/
 │   ├── 01_...06_...                    # infertility v1 analysis/training flow
 │   ├── 07_infertility_fusion_training.py
+│   ├── 08_postpartum_omv_preprocessing.py
 │   ├── 08_pregnancy_risk_training.py
 │   ├── 09_pregnancy_model_evaluation.py
+│   ├── 10_postpartum_risk_training.py
+│   ├── 11_postpartum_model_evaluation.py
 │   ├── run_infertility_v1_pipeline.py
 │   ├── run_pregnancy_v1_pipeline.py
+│   ├── run_postpartum_v1_pipeline.py
 │   └── README.md
 ├── requirements.txt
 ├── LICENSE

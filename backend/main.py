@@ -15,11 +15,13 @@ import secrets
 
 from backend.models.request import (
     InfertilityRequest,
+    PostpartumRequest,
     PregnancyFollowUpRequest,
     PregnancyRequest,
 )
 from backend.models.response import (
     InfertilityResponse,
+    PostpartumResponse,
     PregnancyAssessmentComparisonResponse,
     PregnancyAssessmentHistoryResponse,
     PregnancyAssessmentRecordResponse,
@@ -31,11 +33,17 @@ from backend.db.models import AuthSession, PregnancyAssessment, User
 from backend.db.session import engine, get_db_session
 from backend.services.model_service import (
     get_model_info,
+    get_postpartum_model_info,
     get_pregnancy_model_info,
     load_artifacts,
+    load_postpartum_artifacts,
     load_pregnancy_artifacts,
 )
-from backend.services.prediction_service import predict_infertility, predict_pregnancy
+from backend.services.prediction_service import (
+    predict_infertility,
+    predict_postpartum,
+    predict_pregnancy,
+)
 from backend.services.pregnancy_tracking_service import (
     build_timeline_summary,
     compare_latest_assessments,
@@ -65,6 +73,11 @@ async def lifespan(_: FastAPI):
             logger.info("Pregnancy v1 artifacts loaded successfully.")
         except FileNotFoundError:
             logger.warning("Pregnancy artifacts are not available yet.")
+        try:
+            load_postpartum_artifacts()
+            logger.info("Postpartum v1 artifacts loaded successfully.")
+        except FileNotFoundError:
+            logger.warning("Postpartum artifacts are not available yet.")
     except Exception:
         logger.exception("Error loading models during startup")
         raise
@@ -229,6 +242,7 @@ async def root() -> dict:
             "predict": "/predict/infertility",
             "predict_infertility": "/predict/infertility",
             "predict_pregnancy": "/predict/pregnancy",
+            "predict_postpartum": "/predict/postpartum",
             "pregnancy_followup_assess": "/pregnancy/follow-up/assess",
             "pregnancy_followup_history": "/pregnancy/follow-up/history",
             "pregnancy_followup_compare_latest": "/pregnancy/follow-up/compare/latest",
@@ -237,6 +251,7 @@ async def root() -> dict:
             "model_info": "/model/info",
             "model_info_infertility": "/model/info",
             "model_info_pregnancy": "/model/info/pregnancy",
+            "model_info_postpartum": "/model/info/postpartum",
             "signup": "/auth/signup",
             "login": "/auth/login",
             "me": "/auth/me",
@@ -350,6 +365,17 @@ async def pregnancy_model_info():
         raise HTTPException(status_code=500, detail="Pregnancy model info error") from exc
 
 
+@app.get("/model/info/postpartum")
+async def postpartum_model_info():
+    try:
+        return get_postpartum_model_info()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Postpartum model info error")
+        raise HTTPException(status_code=500, detail="Postpartum model info error") from exc
+
+
 @app.post("/predict/infertility", response_model=InfertilityResponse)
 async def predict_infertility_route(payload: InfertilityRequest):
     try:
@@ -376,6 +402,20 @@ async def predict_pregnancy_route(payload: PregnancyRequest):
     except Exception as exc:
         logger.exception("Pregnancy prediction error")
         raise HTTPException(status_code=500, detail="Pregnancy prediction error") from exc
+
+
+@app.post("/predict/postpartum", response_model=PostpartumResponse)
+async def predict_postpartum_route(payload: PostpartumRequest):
+    try:
+        prediction = predict_postpartum(payload)
+        return PostpartumResponse(**prediction)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Postpartum prediction error")
+        raise HTTPException(status_code=500, detail="Postpartum prediction error") from exc
 
 
 @app.post(

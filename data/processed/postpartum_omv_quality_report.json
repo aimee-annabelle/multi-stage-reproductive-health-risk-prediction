@@ -1,0 +1,69 @@
+{
+  "missing_ratio_top_20": {
+    "Residency": 0.14495412844036698,
+    "Smoke Shish": 0.14128440366972478,
+    "Have you received any support or treatment for postpartum depression": 0.13394495412844037,
+    "Smoke cigarattes": 0.13211009174311927,
+    "Baby had feeding difficluties": 0.12844036697247707,
+    "Type of the last delivery": 0.12660550458715597,
+    "Number of children who died": 0.12660550458715597,
+    "Age (y)": 0.12660550458715597,
+    "financial problems?": 0.11926605504587157,
+    "problems with husband?": 0.11926605504587157,
+    "Healty baby": 0.11926605504587157,
+    "Premature labour": 0.11743119266055047,
+    "Baby admitted in the NICU": 0.11559633027522936,
+    "got COVID-19?": 0.11376146788990826,
+    "Postnatal problems?": 0.11376146788990826,
+    "Pregnancy problem?": 0.11376146788990826,
+    "Natal problems?": 0.11376146788990826,
+    "Have you experienced any cultural stigma or judgment surrounding postpartum depression within your community": 0.11192660550458716,
+    "got COVID-19 vaccine?": 0.11009174311926606,
+    "family problems?": 0.10642201834862386
+  },
+  "placeholder_ratio_top_20": {
+    "if you don't received any support or treatment for postpartum depression what is the causes [Other]": 0.544954128440367,
+    "if you don't received any support or treatment for postpartum depression what is the causes [Financial constraints]": 0.5394495412844037,
+    "Do you use any hormnal ttt or contraceptive pills?": 0.5339449541284405,
+    "if you don't received any support or treatment for postpartum depression what is the causes [Language or communication barriers]": 0.5302752293577981,
+    "if you don't received any support or treatment for postpartum depression what is the causes [Personal barriers]": 0.5284403669724771,
+    "if you don't received any support or treatment for postpartum depression what is the causes [Social norms]": 0.5266055045871559,
+    "Do you use any hormnal ttt or contraceptive pills? (2)": 0.5211009174311927,
+    "if you don't received any support or treatment for postpartum depression. what is the causes [Cultural or traditional beliefs/]": 0.5155963302752293,
+    "if you don't received any support or treatment for postpartum depression what is the causes [Geographical or regional disparities in The availability of mental health resources]": 0.4972477064220183,
+    "Drink Alcohol": 0.3669724770642202,
+    "Smoke Shish": 0.06972477064220184,
+    "Smoke cigarattes": 0.06605504587155964,
+    "Number of children who died": 0.06605504587155964,
+    "Interpregnancy space": 0.009174311926605505,
+    "Number of children alive": 0.007339449541284404,
+    "Number of miscarriges": 0.005504587155963303,
+    "Age (y)": 0.0,
+    "Marital status": 0.0,
+    "What is the household income": 0.0,
+    "Level of education": 0.0
+  },
+  "removed_columns": {
+    "post_treatment_barrier_cols": [
+      "if you don't received any support or treatment for postpartum depression what is the causes [Financial constraints]",
+      "if you don't received any support or treatment for postpartum depression what is the causes [Geographical or regional disparities in The availability of mental health resources]",
+      "if you don't received any support or treatment for postpartum depression what is the causes [Language or communication barriers]",
+      "if you don't received any support or treatment for postpartum depression what is the causes [Other]",
+      "if you don't received any support or treatment for postpartum depression what is the causes [Personal barriers]",
+      "if you don't received any support or treatment for postpartum depression what is the causes [Social norms]",
+      "if you don't received any support or treatment for postpartum depression. what is the causes [Cultural or traditional beliefs/]"
+    ],
+    "high_placeholder_cols": [
+      "Do you use any hormnal ttt or contraceptive pills?",
+      "Do you use any hormnal ttt or contraceptive pills? (2)"
+    ],
+    "high_missing_cols": [
+      "Do you use any hormnal ttt or contraceptive pills?",
+      "Do you use any hormnal ttt or contraceptive pills? (2)",
+      "Drink Alcohol"
+    ],
+    "low_signal_cols": [
+      "Drink Alcohol"
+    ]
+  }
+}

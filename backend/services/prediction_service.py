@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from backend.models.request import InfertilityRequest, PregnancyRequest
-from backend.services.model_service import get_artifacts, get_pregnancy_artifacts
+from backend.models.request import InfertilityRequest, PostpartumRequest, PregnancyRequest
+from backend.services.model_service import (
+    get_artifacts,
+    get_postpartum_artifacts,
+    get_pregnancy_artifacts,
+)
 from backend.services.preprocessing_service import (
     BINARY_FIELDS,
     PREGNANCY_BINARY_FIELDS,
+    prepare_postpartum_inputs,
     prepare_pregnancy_inputs,
     prepare_v2_inputs,
 )
@@ -110,6 +115,17 @@ def _resolve_emergency_threshold(
     return float(min(0.99, max(0.90, decision_threshold + 0.10)))
 
 
+def _resolve_postpartum_emergency_threshold(
+    decision_threshold: float,
+    metadata: Dict[str, Any],
+) -> float:
+    stored = metadata.get("emergency_threshold")
+    if stored is not None:
+        return float(stored)
+
+    return float(min(0.99, max(0.90, decision_threshold + 0.10)))
+
+
 def _pregnancy_referral_advice(
     probability_high_risk: float,
     decision_threshold: float,
@@ -136,6 +152,33 @@ def _pregnancy_referral_advice(
         False,
         "Your risk score is below the referral threshold. Continue routine antenatal follow-up and seek care immediately if warning symptoms appear.",
         "Emergency care is not indicated by score threshold at this time. If severe warning symptoms appear, seek emergency care immediately.",
+    )
+
+
+def _postpartum_referral_advice(
+    probability_high_risk: float,
+    decision_threshold: float,
+    emergency_threshold: float,
+) -> tuple[bool, bool, str, str]:
+    if probability_high_risk >= emergency_threshold:
+        return (
+            True,
+            True,
+            "Your postpartum risk score is above the referral threshold. Seek urgent review by a qualified clinician.",
+            "Your postpartum risk score is above the emergency threshold. Seek emergency care immediately.",
+        )
+    if probability_high_risk >= decision_threshold:
+        return (
+            True,
+            False,
+            "Your postpartum risk score is above the referral threshold. Please visit a hospital or mental health professional as soon as possible.",
+            "Your postpartum risk score is below the emergency threshold right now, but same-day clinical review is recommended.",
+        )
+    return (
+        False,
+        False,
+        "Your postpartum risk score is below the referral threshold. Continue routine follow-up and monitor warning symptoms.",
+        "Emergency care is not indicated by score threshold at this time. Seek emergency care immediately if severe warning symptoms appear.",
     )
 
 
@@ -269,4 +312,59 @@ def predict_pregnancy(request: PregnancyRequest) -> Dict[str, Any]:
         "top_risk_factors": top_risk_factors,
         "imputed_fields": prepared.imputed_fields,
         "model_version": metadata.get("model_version", "1.0.0"),
+    }
+
+
+def predict_postpartum(request: PostpartumRequest) -> Dict[str, Any]:
+    artifacts = get_postpartum_artifacts()
+    metadata = artifacts["metadata"]
+    feature_schema = artifacts["feature_schema"]
+
+    prepared = prepare_postpartum_inputs(request, feature_schema)
+
+    probability_high_risk = float(
+        artifacts["model"].predict_proba(prepared.postpartum_df)[0][1]
+    )
+    decision_threshold = float(
+        metadata.get("decision_threshold", metadata.get("threshold", 0.5))
+    )
+    emergency_threshold = _resolve_postpartum_emergency_threshold(
+        decision_threshold=decision_threshold,
+        metadata=metadata,
+    )
+    probability_low_risk = 1.0 - probability_high_risk
+
+    is_high_risk = probability_high_risk >= decision_threshold
+    predicted_class = "high_postpartum_risk" if is_high_risk else "low_postpartum_risk"
+    (
+        advise_hospital_visit,
+        advise_emergency_care,
+        hospital_advice,
+        emergency_advice,
+    ) = _postpartum_referral_advice(
+        probability_high_risk=probability_high_risk,
+        decision_threshold=decision_threshold,
+        emergency_threshold=emergency_threshold,
+    )
+
+    top_risk_factors = _collect_pregnancy_top_factors(
+        payload=prepared.payload,
+        feature_importance=metadata.get("feature_importance", {}),
+        top_n=5,
+    )
+
+    return {
+        "predicted_class": predicted_class,
+        "probability_high_risk": round(probability_high_risk, 6),
+        "probability_low_risk": round(probability_low_risk, 6),
+        "risk_level": "High Risk" if is_high_risk else "Low Risk",
+        "decision_threshold": round(decision_threshold, 6),
+        "emergency_threshold": round(emergency_threshold, 6),
+        "advise_hospital_visit": advise_hospital_visit,
+        "advise_emergency_care": advise_emergency_care,
+        "hospital_advice": hospital_advice,
+        "emergency_advice": emergency_advice,
+        "top_risk_factors": top_risk_factors,
+        "imputed_fields": prepared.imputed_fields,
+        "model_version": metadata.get("model_version", "1.1.0"),
     }

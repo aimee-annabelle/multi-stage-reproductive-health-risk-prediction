@@ -67,6 +67,31 @@ Creates:
 - `ml/pregnancy_v1_feature_schema.pkl`
 - `evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md`
 
+## Postpartum V1 Pipeline Scripts
+
+- `08_postpartum_omv_preprocessing.py`
+- `10_postpartum_risk_training.py`
+- `11_postpartum_model_evaluation.py`
+
+Run full postpartum v1 pipeline + report:
+
+```bash
+python notebooks/run_postpartum_v1_pipeline.py
+```
+
+Report-only mode:
+
+```bash
+python notebooks/run_postpartum_v1_pipeline.py --report-only
+```
+
+Creates:
+
+- `ml/postpartum_v1_model.pkl`
+- `ml/postpartum_v1_metadata.pkl`
+- `ml/postpartum_v1_feature_schema.pkl`
+- `evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md`
+
 ## Environment Setup
 
 ```bash

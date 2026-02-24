@@ -16,6 +16,7 @@ from backend.main import app  # noqa: E402
 from backend.db.session import engine  # noqa: E402
 from backend.services.model_service import (  # noqa: E402
     artifacts_available,
+    postpartum_artifacts_available,
     pregnancy_artifacts_available,
 )
 
@@ -29,10 +30,16 @@ def ensure_artifacts() -> None:
         subprocess.run([sys.executable, str(infertility_training_script)], check=True)
 
     if pregnancy_artifacts_available():
+        pass
+    else:
+        pregnancy_training_script = ROOT / "notebooks" / "08_pregnancy_risk_training.py"
+        subprocess.run([sys.executable, str(pregnancy_training_script)], check=True)
+
+    if postpartum_artifacts_available():
         return
 
-    pregnancy_training_script = ROOT / "notebooks" / "08_pregnancy_risk_training.py"
-    subprocess.run([sys.executable, str(pregnancy_training_script)], check=True)
+    postpartum_pipeline_script = ROOT / "notebooks" / "run_postpartum_v1_pipeline.py"
+    subprocess.run([sys.executable, str(postpartum_pipeline_script)], check=True)
 
 
 @pytest.fixture(scope="session", autouse=True)
