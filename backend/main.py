@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
@@ -13,12 +13,36 @@ import os
 import re
 import secrets
 
-from backend.models.request import InfertilityRequest
-from backend.models.response import InfertilityResponse
-from backend.db.models import AuthSession, User
+from backend.models.request import (
+    InfertilityRequest,
+    PregnancyFollowUpRequest,
+    PregnancyRequest,
+)
+from backend.models.response import (
+    InfertilityResponse,
+    PregnancyAssessmentComparisonResponse,
+    PregnancyAssessmentHistoryResponse,
+    PregnancyAssessmentRecordResponse,
+    PregnancyTimelinePointResponse,
+    PregnancyTimelineSummaryResponse,
+    PregnancyResponse,
+)
+from backend.db.models import AuthSession, PregnancyAssessment, User
 from backend.db.session import engine, get_db_session
-from backend.services.model_service import get_model_info, load_artifacts
-from backend.services.prediction_service import predict_infertility
+from backend.services.model_service import (
+    get_model_info,
+    get_pregnancy_model_info,
+    load_artifacts,
+    load_pregnancy_artifacts,
+)
+from backend.services.prediction_service import predict_infertility, predict_pregnancy
+from backend.services.pregnancy_tracking_service import (
+    build_timeline_summary,
+    compare_latest_assessments,
+    count_pregnancy_assessments,
+    create_pregnancy_assessment,
+    list_pregnancy_assessments,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +60,11 @@ async def lifespan(_: FastAPI):
             conn.execute(text("SELECT 1"))
         load_artifacts()
         logger.info("Infertility fusion artifacts loaded successfully.")
+        try:
+            load_pregnancy_artifacts()
+            logger.info("Pregnancy v1 artifacts loaded successfully.")
+        except FileNotFoundError:
+            logger.warning("Pregnancy artifacts are not available yet.")
     except Exception:
         logger.exception("Error loading models during startup")
         raise
@@ -151,14 +180,63 @@ def get_current_user(
     return user_to_response(user)
 
 
+def pregnancy_assessment_to_response(
+    assessment: PregnancyAssessment,
+) -> PregnancyAssessmentRecordResponse:
+    created_at = (
+        assessment.created_at.isoformat()
+        if hasattr(assessment.created_at, "isoformat")
+        else str(assessment.created_at)
+    )
+    return PregnancyAssessmentRecordResponse(
+        assessment_id=assessment.id,
+        created_at=created_at,
+        gestational_age_weeks=assessment.gestational_age_weeks,
+        visit_label=assessment.visit_label,
+        notes=assessment.notes,
+        age=assessment.age,
+        systolic_bp=assessment.systolic_bp,
+        diastolic=assessment.diastolic,
+        bs=assessment.bs,
+        body_temp=assessment.body_temp,
+        bmi=assessment.bmi,
+        previous_complications=assessment.previous_complications,
+        preexisting_diabetes=assessment.preexisting_diabetes,
+        gestational_diabetes=assessment.gestational_diabetes,
+        mental_health=assessment.mental_health,
+        heart_rate=assessment.heart_rate,
+        predicted_class=assessment.predicted_class,
+        probability_high_risk=assessment.probability_high_risk,
+        probability_low_risk=assessment.probability_low_risk,
+        risk_level=assessment.risk_level,
+        decision_threshold=assessment.decision_threshold,
+        emergency_threshold=assessment.emergency_threshold,
+        advise_hospital_visit=assessment.advise_hospital_visit,
+        advise_emergency_care=assessment.advise_emergency_care,
+        hospital_advice=assessment.hospital_advice,
+        emergency_advice=assessment.emergency_advice,
+        top_risk_factors=assessment.top_risk_factors or {},
+        imputed_fields=assessment.imputed_fields or [],
+        model_version=assessment.model_version,
+    )
+
+
 @app.get("/")
 async def root() -> dict:
     return {
         "message": "Reproductive Health Risk Prediction API",
         "endpoints": {
             "predict": "/predict/infertility",
+            "predict_infertility": "/predict/infertility",
+            "predict_pregnancy": "/predict/pregnancy",
+            "pregnancy_followup_assess": "/pregnancy/follow-up/assess",
+            "pregnancy_followup_history": "/pregnancy/follow-up/history",
+            "pregnancy_followup_compare_latest": "/pregnancy/follow-up/compare/latest",
+            "pregnancy_followup_timeline_summary": "/pregnancy/follow-up/timeline/summary",
             "health": "/health",
             "model_info": "/model/info",
+            "model_info_infertility": "/model/info",
+            "model_info_pregnancy": "/model/info/pregnancy",
             "signup": "/auth/signup",
             "login": "/auth/login",
             "me": "/auth/me",
@@ -261,6 +339,17 @@ async def model_info():
         raise HTTPException(status_code=500, detail="Model info error") from exc
 
 
+@app.get("/model/info/pregnancy")
+async def pregnancy_model_info():
+    try:
+        return get_pregnancy_model_info()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Pregnancy model info error")
+        raise HTTPException(status_code=500, detail="Pregnancy model info error") from exc
+
+
 @app.post("/predict/infertility", response_model=InfertilityResponse)
 async def predict_infertility_route(payload: InfertilityRequest):
     try:
@@ -273,6 +362,137 @@ async def predict_infertility_route(payload: InfertilityRequest):
     except Exception as exc:
         logger.exception("Prediction error")
         raise HTTPException(status_code=500, detail="Prediction error") from exc
+
+
+@app.post("/predict/pregnancy", response_model=PregnancyResponse)
+async def predict_pregnancy_route(payload: PregnancyRequest):
+    try:
+        prediction = predict_pregnancy(payload)
+        return PregnancyResponse(**prediction)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Pregnancy prediction error")
+        raise HTTPException(status_code=500, detail="Pregnancy prediction error") from exc
+
+
+@app.post(
+    "/pregnancy/follow-up/assess",
+    response_model=PregnancyAssessmentRecordResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def assess_and_store_pregnancy_followup(
+    payload: PregnancyFollowUpRequest,
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    try:
+        prediction = predict_pregnancy(payload)
+        assessment = create_pregnancy_assessment(
+            db=db,
+            user_id=current_user.id,
+            payload=payload,
+            prediction=prediction,
+        )
+        return pregnancy_assessment_to_response(assessment)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Pregnancy follow-up storage error")
+        raise HTTPException(status_code=500, detail="Pregnancy follow-up storage error") from exc
+
+
+@app.get(
+    "/pregnancy/follow-up/history",
+    response_model=PregnancyAssessmentHistoryResponse,
+)
+async def get_pregnancy_followup_history(
+    limit: int = Query(default=20, ge=1, le=200),
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    assessments = list_pregnancy_assessments(db=db, user_id=current_user.id, limit=limit)
+    total = count_pregnancy_assessments(db=db, user_id=current_user.id)
+    return PregnancyAssessmentHistoryResponse(
+        total_records=total,
+        assessments=[pregnancy_assessment_to_response(item) for item in assessments],
+    )
+
+
+@app.get(
+    "/pregnancy/follow-up/compare/latest",
+    response_model=PregnancyAssessmentComparisonResponse,
+)
+async def compare_latest_pregnancy_followups(
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    try:
+        comparison = compare_latest_assessments(db=db, user_id=current_user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    latest = comparison["latest"]
+    previous = comparison["previous"]
+    return PregnancyAssessmentComparisonResponse(
+        latest_assessment_id=latest.id,
+        previous_assessment_id=previous.id,
+        latest_created_at=latest.created_at.isoformat(),
+        previous_created_at=previous.created_at.isoformat(),
+        latest_probability_high_risk=latest.probability_high_risk,
+        previous_probability_high_risk=previous.probability_high_risk,
+        probability_high_risk_delta=comparison["probability_high_risk_delta"],
+        trend=comparison["trend"],
+        metric_deltas=comparison["metric_deltas"],
+    )
+
+
+@app.get(
+    "/pregnancy/follow-up/timeline/summary",
+    response_model=PregnancyTimelineSummaryResponse,
+)
+async def get_pregnancy_followup_timeline_summary(
+    limit: int = Query(default=50, ge=1, le=500),
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    summary = build_timeline_summary(db=db, user_id=current_user.id, limit=limit)
+    points = [
+        PregnancyTimelinePointResponse(
+            assessment_id=item.id,
+            created_at=item.created_at.isoformat(),
+            gestational_age_weeks=item.gestational_age_weeks,
+            visit_label=item.visit_label,
+            probability_high_risk=item.probability_high_risk,
+            probability_low_risk=item.probability_low_risk,
+            risk_level=item.risk_level,
+            advise_hospital_visit=item.advise_hospital_visit,
+            advise_emergency_care=item.advise_emergency_care,
+            systolic_bp=item.systolic_bp,
+            diastolic=item.diastolic,
+            bs=item.bs,
+            bmi=item.bmi,
+            heart_rate=item.heart_rate,
+        )
+        for item in summary["points"]
+    ]
+
+    return PregnancyTimelineSummaryResponse(
+        total_records=summary["total_records"],
+        time_span_days=summary["time_span_days"],
+        high_risk_count=summary["high_risk_count"],
+        hospital_referral_count=summary["hospital_referral_count"],
+        emergency_referral_count=summary["emergency_referral_count"],
+        earliest_probability_high_risk=summary["earliest_probability_high_risk"],
+        latest_probability_high_risk=summary["latest_probability_high_risk"],
+        probability_high_risk_change=summary["probability_high_risk_change"],
+        trend=summary["trend"],
+        points=points,
+    )
 
 
 if __name__ == "__main__":

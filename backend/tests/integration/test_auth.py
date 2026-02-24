@@ -1,7 +1,8 @@
 from sqlalchemy import delete
 
-from backend.db.models import AuthSession, User
-from backend.db.session import SessionLocal
+from backend.db.base import Base
+from backend.db.models import AuthSession, PregnancyAssessment, User
+from backend.db.session import SessionLocal, engine
 from fastapi.testclient import TestClient
 
 from backend.main import app
@@ -13,6 +14,7 @@ client = TestClient(app)
 def _cleanup_auth_db() -> None:
     db = SessionLocal()
     try:
+        db.execute(delete(PregnancyAssessment))
         db.execute(delete(AuthSession))
         db.execute(delete(User))
         db.commit()
@@ -21,6 +23,7 @@ def _cleanup_auth_db() -> None:
 
 
 def setup_module() -> None:
+    Base.metadata.create_all(bind=engine)
     _cleanup_auth_db()
 
 
@@ -88,3 +91,87 @@ def test_signup_duplicate_email_returns_conflict() -> None:
         },
     )
     assert second_signup.status_code == 409
+
+
+def test_pregnancy_followup_storage_history_and_comparison() -> None:
+    signup_res = client.post(
+        "/auth/signup",
+        json={
+            "full_name": "Pregnancy User",
+            "email": "pregnancy.user@example.com",
+            "password": "StrongPass123",
+        },
+    )
+    assert signup_res.status_code == 201
+    token = signup_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    payload_1 = {
+        "gestational_age_weeks": 22,
+        "visit_label": "ANC Visit 1",
+        "notes": "Baseline follow-up",
+        "age": 28,
+        "systolic_bp": 120,
+        "diastolic": 80,
+        "bs": 6.2,
+        "body_temp": 98.6,
+        "bmi": 24.3,
+        "previous_complications": 0,
+        "preexisting_diabetes": 0,
+        "gestational_diabetes": 0,
+        "mental_health": 0,
+        "heart_rate": 74,
+    }
+    create_1 = client.post("/pregnancy/follow-up/assess", json=payload_1, headers=headers)
+    assert create_1.status_code == 201
+    body_1 = create_1.json()
+    assert body_1["visit_label"] == "ANC Visit 1"
+    assert body_1["assessment_id"] > 0
+
+    payload_2 = {
+        "gestational_age_weeks": 28,
+        "visit_label": "ANC Visit 2",
+        "notes": "Follow-up with higher blood pressure",
+        "age": 28,
+        "systolic_bp": 140,
+        "diastolic": 90,
+        "bs": 8.8,
+        "body_temp": 99.1,
+        "bmi": 25.1,
+        "previous_complications": 1,
+        "preexisting_diabetes": 0,
+        "gestational_diabetes": 0,
+        "mental_health": 1,
+        "heart_rate": 82,
+    }
+    create_2 = client.post("/pregnancy/follow-up/assess", json=payload_2, headers=headers)
+    assert create_2.status_code == 201
+    body_2 = create_2.json()
+    assert body_2["visit_label"] == "ANC Visit 2"
+    assert body_2["assessment_id"] > body_1["assessment_id"]
+
+    history_res = client.get("/pregnancy/follow-up/history?limit=10", headers=headers)
+    assert history_res.status_code == 200
+    history = history_res.json()
+    assert history["total_records"] >= 2
+    assert len(history["assessments"]) >= 2
+    assert history["assessments"][0]["assessment_id"] == body_2["assessment_id"]
+
+    compare_res = client.get("/pregnancy/follow-up/compare/latest", headers=headers)
+    assert compare_res.status_code == 200
+    compare = compare_res.json()
+    assert compare["latest_assessment_id"] == body_2["assessment_id"]
+    assert compare["previous_assessment_id"] == body_1["assessment_id"]
+    assert compare["trend"] in {"increased", "decreased", "stable"}
+    assert "systolic_bp" in compare["metric_deltas"]
+
+    timeline_res = client.get("/pregnancy/follow-up/timeline/summary?limit=10", headers=headers)
+    assert timeline_res.status_code == 200
+    timeline = timeline_res.json()
+    assert timeline["total_records"] >= 2
+    assert timeline["trend"] in {"increased", "decreased", "stable"}
+    assert timeline["latest_probability_high_risk"] is not None
+    assert timeline["earliest_probability_high_risk"] is not None
+    assert len(timeline["points"]) >= 2
+    assert timeline["points"][0]["assessment_id"] == body_1["assessment_id"]
+    assert timeline["points"][-1]["assessment_id"] == body_2["assessment_id"]

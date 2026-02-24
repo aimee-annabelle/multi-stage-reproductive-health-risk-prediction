@@ -1,52 +1,81 @@
-# Notebooks - ML Pipeline
+# Notebooks and Training Scripts
 
-Jupyter notebooks for the complete machine learning workflow.
+This directory contains the model-development scripts used in the project.
 
-## Notebooks
+## Infertility V1 Pipeline Scripts
 
-1. **01_exploratory_data_analysis.py** - Data exploration and analysis
-2. **02_feature_engineering.py** - Feature creation and selection
-3. **03_data_preprocessing.py** - Data cleaning and preprocessing
-4. **04_model_training.py** - Model training (baseline and advanced)
-5. **05_hyperparameter_tuning.py** - Hyperparameter optimization
-6. **06_model_evaluation.py** - Model evaluation and analysis
+- `01_exploratory_data_analysis.py`
+- `02_feature_engineering.py`
+- `03_data_preprocessing.py`
+- `04_model_training.py`
+- `05_hyperparameter_tuning.py`
+- `06_model_evaluation.py`
 
-## Setup
-
-```bash
-# Install dependencies
-pip install -r ../requirements.txt
-pip install jupyter notebook ipykernel
-
-# Add kernel
-python -m ipykernel install --user --name=reproductive-health
-
-# Run Jupyter
-jupyter notebook
-```
-
-## Usage
-
-Execute notebooks in sequential order (01-06). Each notebook builds on the previous ones.
-
-Or run the full infertility v1 pipeline and auto-generate a consolidated report:
+Run full infertility v1 pipeline + report:
 
 ```bash
 python notebooks/run_infertility_v1_pipeline.py
 ```
 
-Useful flags:
+Optional flags:
 
 ```bash
-# Skip hyperparameter tuning stage (faster)
 python notebooks/run_infertility_v1_pipeline.py --skip-tuning
-
-# Rebuild only the consolidated report from existing outputs
 python notebooks/run_infertility_v1_pipeline.py --report-only
 ```
 
-## Output
+Outputs are written under `evaluation/infertility_v1/` and model artifacts under `ml/`.
 
-- Processed data → `../data/processed/`
-- Trained models → `../ml/`
-- Evaluation reports → `../evaluation/`
+## Infertility V2 (Production Inference Artifacts)
+
+- `07_infertility_fusion_training.py`
+
+Run:
+
+```bash
+python notebooks/07_infertility_fusion_training.py
+```
+
+Creates:
+
+- `ml/infertility_v2_symptom_model.pkl`
+- `ml/infertility_v2_history_model.pkl`
+- `ml/infertility_v2_metadata.pkl`
+- `ml/infertility_v2_feature_schema.pkl`
+
+## Pregnancy V1 Pipeline Scripts
+
+- `08_pregnancy_risk_training.py`
+- `09_pregnancy_model_evaluation.py`
+
+Run full pregnancy v1 pipeline + report:
+
+```bash
+python notebooks/run_pregnancy_v1_pipeline.py
+```
+
+Report-only mode:
+
+```bash
+python notebooks/run_pregnancy_v1_pipeline.py --report-only
+```
+
+Creates:
+
+- `ml/pregnancy_v1_model.pkl`
+- `ml/pregnancy_v1_metadata.pkl`
+- `ml/pregnancy_v1_feature_schema.pkl`
+- `evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md`
+
+## Environment Setup
+
+```bash
+pip install -r requirements.txt
+```
+
+Optional for notebook UI work:
+
+```bash
+pip install jupyter notebook ipykernel
+jupyter notebook
+```

@@ -1,97 +1,109 @@
-# Backend - Multi-Stage Reproductive Health Risk Prediction
+# Backend - Reproductive Health Risk Prediction API
 
-FastAPI backend for the Multi-Stage Reproductive Health Risk Prediction system.
+FastAPI backend for infertility and pregnancy risk prediction, plus authenticated maternal follow-up tracking.
 
-## Project Structure
+## Current Backend Layout
 
-```
+```text
 backend/
-├── alembic/                # Alembic migration scripts
-│   ├── env.py
+├── alembic/
 │   └── versions/
-├── db/
-│   ├── base.py             # SQLAlchemy declarative base
-│   ├── models.py           # PostgreSQL ORM models
-│   └── session.py          # Engine and session factory
 ├── api/
-│   └── routes/
-│       ├── health.py      # Health check endpoints
-│       ├── prediction.py  # Prediction endpoints
-│       └── model.py       # Model management
-├── services/
-│   ├── prediction_service.py    # Prediction logic
-│   ├── preprocessing_service.py # Data preprocessing
-│   └── model_service.py         # Model management
+│   └── routes/                 # legacy/experimental route modules
+├── db/
+│   ├── base.py
+│   ├── models.py
+│   └── session.py
 ├── models/
-│   ├── request.py        # Request schemas
-│   └── response.py       # Response schemas
-├── utils/
-│   └── config.py         # Config, logging, error handling
-├── middleware/
-│   └── error_handler.py  # CORS & error handling
+│   ├── request.py
+│   └── response.py
+├── services/
+│   ├── model_service.py
+│   ├── prediction_service.py
+│   ├── pregnancy_tracking_service.py
+│   └── preprocessing_service.py
 ├── tests/
-│   ├── unit/
-│   │   └── test_services.py
 │   ├── integration/
-│   │   └── test_api.py
+│   ├── unit/
 │   └── conftest.py
-├── main.py
+├── main.py                     # active route registration and app startup
 ├── alembic.ini
-├── requirements.txt
 └── .env.example
 ```
 
 ## Setup
 
 ```bash
-# Create virtual environment
+# from repository root
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies from root
-pip install -r ../requirements.txt
-
-# Configure environment
-cp .env.example .env
-
-# Start PostgreSQL and update DB env vars in .env
-# (DATABASE_URL is recommended for deployed environments)
-
-# Run database migrations
-alembic -c backend/alembic.ini upgrade head
-
-# Run server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+source venv/bin/activate
+pip install -r requirements.txt
+cp backend/.env.example backend/.env
 ```
+
+Set database config in `backend/.env`:
+
+- `DATABASE_URL` (recommended), or
+- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`
+
+Apply migrations:
+
+```bash
+alembic -c backend/alembic.ini upgrade head
+```
+
+Run API:
+
+```bash
+python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## Active Endpoints
+
+- `GET /`
+- `GET /health`
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /auth/me`
+- `POST /auth/logout`
+- `GET /model/info`
+- `GET /model/info/pregnancy`
+- `POST /predict/infertility`
+- `POST /predict/pregnancy`
+- `POST /pregnancy/follow-up/assess`
+- `GET /pregnancy/follow-up/history`
+- `GET /pregnancy/follow-up/compare/latest`
+- `GET /pregnancy/follow-up/timeline/summary`
 
 ## Database
 
-Authentication data uses PostgreSQL.
+PostgreSQL is used for:
 
-- Deployment: set `DATABASE_URL`
-- Local fallback: `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`
+- `users`
+- `sessions`
+- `pregnancy_assessments`
 
-## Migrations
+Migrations:
 
 ```bash
-# Apply latest schema
 alembic -c backend/alembic.ini upgrade head
-
-# Create a new migration after model changes
 alembic -c backend/alembic.ini revision --autogenerate -m "describe change"
-
-# Rollback one revision
 alembic -c backend/alembic.ini downgrade -1
 ```
 
-## API Documentation
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
 ## Testing
 
+Integration tests are PostgreSQL-only.
+
 ```bash
-pytest                    # Run all tests
-pytest --cov=.           # With coverage
+export DATABASE_URL="postgresql+psycopg2://postgres:<password>@localhost:5432/reproductive_health_test"
+alembic -c backend/alembic.ini upgrade head
+pytest
+pytest --cov=backend
 ```
+
+## API Docs
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+- Detailed endpoint docs: `docs/API_DOCUMENTATION.md`

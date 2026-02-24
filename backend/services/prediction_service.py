@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from backend.models.request import InfertilityRequest
-from backend.services.model_service import get_artifacts
-from backend.services.preprocessing_service import BINARY_FIELDS, prepare_v2_inputs
+from backend.models.request import InfertilityRequest, PregnancyRequest
+from backend.services.model_service import get_artifacts, get_pregnancy_artifacts
+from backend.services.preprocessing_service import (
+    BINARY_FIELDS,
+    PREGNANCY_BINARY_FIELDS,
+    prepare_pregnancy_inputs,
+    prepare_v2_inputs,
+)
 
 
 def _risk_level(probability: float, threshold: float) -> str:
@@ -59,6 +64,79 @@ def _collect_top_factors(
 
     top_items = sorted(scores.items(), key=lambda item: item[1], reverse=True)[:top_n]
     return {name: round(value, 6) for name, value in top_items}
+
+
+def _collect_pregnancy_top_factors(
+    payload: Dict[str, Any],
+    feature_importance: Dict[str, float],
+    top_n: int = 5,
+) -> Dict[str, float]:
+    scores: Dict[str, float] = {}
+
+    for feature_name, importance in feature_importance.items():
+        value = payload.get(feature_name)
+        if value is None:
+            continue
+
+        if feature_name in PREGNANCY_BINARY_FIELDS and int(value) != 1:
+            continue
+
+        score = float(importance)
+        if score <= 0:
+            continue
+
+        scores[feature_name] = score
+
+    if not scores:
+        scores = {
+            feature_name: float(importance)
+            for feature_name, importance in feature_importance.items()
+            if float(importance) > 0
+        }
+
+    top_items = sorted(scores.items(), key=lambda item: item[1], reverse=True)[:top_n]
+    return {name: round(value, 6) for name, value in top_items}
+
+
+def _resolve_emergency_threshold(
+    decision_threshold: float,
+    metadata: Dict[str, Any],
+) -> float:
+    stored = metadata.get("emergency_threshold")
+    if stored is not None:
+        return float(stored)
+
+    # Keep emergency triage stricter than referral threshold.
+    return float(min(0.99, max(0.90, decision_threshold + 0.10)))
+
+
+def _pregnancy_referral_advice(
+    probability_high_risk: float,
+    decision_threshold: float,
+    emergency_threshold: float,
+) -> tuple[bool, bool, str, str]:
+    if probability_high_risk >= emergency_threshold:
+        return (
+            True,
+            True,
+            "Your risk score is at or above the referral threshold. Please visit a hospital or contact a qualified clinician as soon as possible.",
+            "Your risk score is at or above the emergency threshold. Seek emergency medical care immediately.",
+        )
+
+    if probability_high_risk >= decision_threshold:
+        return (
+            True,
+            False,
+            "Your risk score is at or above the referral threshold. Please visit a hospital or contact a qualified clinician as soon as possible.",
+            "Your risk score is below the emergency threshold right now, but urgent same-day clinical review is recommended.",
+        )
+
+    return (
+        False,
+        False,
+        "Your risk score is below the referral threshold. Continue routine antenatal follow-up and seek care immediately if warning symptoms appear.",
+        "Emergency care is not indicated by score threshold at this time. If severe warning symptoms appear, seek emergency care immediately.",
+    )
 
 
 def predict_infertility_v2(request: InfertilityRequest) -> Dict[str, Any]:
@@ -139,3 +217,56 @@ def predict_infertility_v2(request: InfertilityRequest) -> Dict[str, Any]:
 
 def predict_infertility(request: InfertilityRequest) -> Dict[str, Any]:
     return predict_infertility_v2(request)
+
+
+def predict_pregnancy(request: PregnancyRequest) -> Dict[str, Any]:
+    artifacts = get_pregnancy_artifacts()
+    metadata = artifacts["metadata"]
+    feature_schema = artifacts["feature_schema"]
+
+    prepared = prepare_pregnancy_inputs(request, feature_schema)
+
+    probability_high_risk = float(
+        artifacts["model"].predict_proba(prepared.pregnancy_df)[0][1]
+    )
+    decision_threshold = float(metadata.get("threshold", 0.5))
+    emergency_threshold = _resolve_emergency_threshold(
+        decision_threshold=decision_threshold,
+        metadata=metadata,
+    )
+    probability_low_risk = 1.0 - probability_high_risk
+
+    is_high_risk = probability_high_risk >= decision_threshold
+    predicted_class = "high_pregnancy_risk" if is_high_risk else "low_pregnancy_risk"
+    risk_level = "High Risk" if is_high_risk else "Low Risk"
+    (
+        advise_hospital_visit,
+        advise_emergency_care,
+        hospital_advice,
+        emergency_advice,
+    ) = _pregnancy_referral_advice(
+        probability_high_risk=probability_high_risk,
+        decision_threshold=decision_threshold,
+        emergency_threshold=emergency_threshold,
+    )
+
+    top_risk_factors = _collect_pregnancy_top_factors(
+        payload=prepared.payload,
+        feature_importance=metadata.get("feature_importance", {}),
+    )
+
+    return {
+        "predicted_class": predicted_class,
+        "probability_high_risk": round(probability_high_risk, 6),
+        "probability_low_risk": round(probability_low_risk, 6),
+        "risk_level": risk_level,
+        "decision_threshold": round(decision_threshold, 6),
+        "emergency_threshold": round(emergency_threshold, 6),
+        "advise_hospital_visit": advise_hospital_visit,
+        "advise_emergency_care": advise_emergency_care,
+        "hospital_advice": hospital_advice,
+        "emergency_advice": emergency_advice,
+        "top_risk_factors": top_risk_factors,
+        "imputed_fields": prepared.imputed_fields,
+        "model_version": metadata.get("model_version", "1.0.0"),
+    }

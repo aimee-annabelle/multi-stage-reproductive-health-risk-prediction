@@ -1,139 +1,49 @@
 # API Documentation
 
-## Infertility Risk Prediction API
+## Reproductive Health Risk Prediction API
 
-Unified FastAPI documentation for infertility risk prediction using a cohabitation-aware dual-branch model.
+Base URL (local): `http://localhost:8000`
 
-## Base URL
+The API currently provides:
 
-- Local: `http://localhost:8000`
-- Production: `[To be deployed]`
-
-## Database
-
-Authentication is persisted in PostgreSQL (not SQLite/NoSQL).
-
-- Use `DATABASE_URL` for deployed environments.
-- Or set local connection values: `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`.
-- Apply schema migrations with Alembic: `alembic -c backend/alembic.ini upgrade head`.
+- Stage 1 infertility risk prediction
+- Stage 2 pregnancy risk prediction
+- Authentication
+- User-linked pregnancy follow-up tracking and trend comparison
 
 ## Authentication
 
-The API now supports token-based authentication for user accounts:
+Auth token type: Bearer
 
-- `POST /auth/signup` to create a new account
-- `POST /auth/login` to authenticate and receive a bearer token
-- `GET /auth/me` to fetch the current authenticated user
-- `POST /auth/logout` to invalidate the current bearer token
-
-Use the token in requests:
+Header format:
 
 `Authorization: Bearer <access_token>`
 
-## API Endpoints
+### Endpoints
 
-### 1. Root
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /auth/me`
+- `POST /auth/logout`
 
-**GET** `/`
+## System Endpoints
 
-Returns API information and available endpoints.
+- `GET /` - API map
+- `GET /health` - service status
+- `GET /model/info` - infertility model metadata
+- `GET /model/info/pregnancy` - pregnancy model metadata
 
-**Response (200 OK)**:
+## Prediction Endpoints
 
-```json
-{
-  "message": "Reproductive Health Risk Prediction API",
-  "endpoints": {
-    "predict": "/predict/infertility",
-    "health": "/health",
-    "model_info": "/model/info",
-    "signup": "/auth/signup",
-    "login": "/auth/login",
-    "me": "/auth/me",
-    "logout": "/auth/logout",
-    "docs": "/docs"
-  }
-}
-```
+### 1) `POST /predict/infertility`
 
-### 2. Health Check
+#### Required fields
 
-**GET** `/health`
+- `age` (15-60)
+- `ever_cohabited` (0 or 1)
+- `children_ever_born` (0-20)
 
-Returns service health and model load status.
-
-**Response (200)**
-
-```json
-{
-  "status": "healthy",
-  "model_loaded": true
-}
-```
-
-### 3. Model Information
-
-**GET** `/model/info`
-
-Returns fusion model metadata.
-
-**Response (200)**
-
-```json
-{
-  "model_version": "2.0.0",
-  "pipeline_type": "dual_branch_fusion",
-  "target_name": "infertile",
-  "training_date_utc": "2026-02-16T10:00:00+00:00",
-  "recall_target": 0.9,
-  "thresholds": {
-    "symptom": 0.505,
-    "history": 0.75,
-    "fused": 0.6354
-  },
-  "fusion_weights": {
-    "symptom": 0.4679,
-    "history": 0.5321
-  },
-  "branch_metrics": {
-    "symptom": {
-      "accuracy": 0.8531,
-      "precision": 0.9103,
-      "recall": 0.9103,
-      "f1": 0.9103,
-      "roc_auc": 0.8675
-    },
-    "history": {
-      "accuracy": 0.9294,
-      "precision": 0.9669,
-      "recall": 0.9044,
-      "f1": 0.9346,
-      "roc_auc": 0.9862
-    }
-  }
-}
-```
-
-### 4. Predict Infertility Risk
-
-**POST** `/predict/infertility`
-
-Unified endpoint that routes inference based on cohabitation context:
-
-- `ever_cohabited = 0`: symptom-only branch
-- `ever_cohabited = 1`: history-only or fused prediction depending on provided symptom fields
-
-Maternal dataset is excluded from this infertility endpoint.
-
-## Request Schema
-
-### Required fields
-
-- `age` (integer)
-- `ever_cohabited` (integer, `0` or `1`)
-- `children_ever_born` (integer)
-
-### Optional symptom fields
+#### Optional symptom fields (0 or 1)
 
 - `irregular_menstrual_cycles`
 - `chronic_pelvic_pain`
@@ -143,97 +53,207 @@ Maternal dataset is excluded from this infertility endpoint.
 - `autoimmune_history`
 - `reproductive_surgery_history`
 
-Important rule for never-cohabited users:
+#### Optional history fields
 
-- If `ever_cohabited = 0`, you must provide at least one symptom field above.
-- If none are provided, the API returns `422` because no model branch can be evaluated.
+- `bmi` (10-8000; supports legacy BMI*100 encoding)
+- `smoked_last_12mo` (0 or 1)
+- `alcohol_last_12mo` (0 or 1)
+- `age_at_first_marriage` (0-60, and must be `>= 8` when `ever_cohabited=1`)
+- `months_since_first_cohabitation` (0-720)
+- `months_since_last_sex` (0-2000)
 
-### Optional history fields
+#### Response keys
 
-- `bmi`
-- `smoked_last_12mo`
-- `alcohol_last_12mo`
-- `age_at_first_marriage`
-- `months_since_first_cohabitation`
-- `months_since_last_sex`
+- `predicted_class`
+- `probability_infertile`
+- `probability_primary`
+- `probability_secondary`
+- `risk_level`
+- `decision_threshold`
+- `assessment_mode` (`symptom_only` | `history_only` | `fused`)
+- `models_used`
+- `top_risk_factors`
+- `model_version`
 
-If history fields are omitted, model-side imputation is applied.
+### 2) `POST /predict/pregnancy`
 
-## Request Example
+#### Required fields
 
-```json
-{
-  "age": 28,
-  "ever_cohabited": 0,
-  "children_ever_born": 0,
-  "irregular_menstrual_cycles": 1,
-  "chronic_pelvic_pain": 1
-}
-```
+- `age` (10-65)
+- `systolic_bp` (70-200)
+- `diastolic` (40-140)
 
-## Response Example
+#### Optional fields
 
-```json
-{
-  "predicted_class": "primary_infertility_risk",
-  "probability_infertile": 0.812341,
-  "probability_primary": 0.812341,
-  "probability_secondary": 0.0,
-  "risk_level": "High Risk",
-  "decision_threshold": 0.505,
-  "assessment_mode": "symptom_only",
-  "models_used": ["symptom"],
-  "top_risk_factors": {
-    "irregular_menstrual_cycles": 0.113201,
-    "chronic_pelvic_pain": 0.091177,
-    "age": 0.082011
-  },
-  "model_version": "2.0.0"
-}
-```
+- `bs` (3-19)
+- `body_temp` (95-105)
+- `bmi` (0-60; values `<= 0` are treated as missing)
+- `previous_complications` (0 or 1)
+- `preexisting_diabetes` (0 or 1)
+- `gestational_diabetes` (0 or 1)
+- `mental_health` (0 or 1)
+- `heart_rate` (40-140)
 
-## Class Rules
+#### Response keys
 
-- `no_infertility_risk`: `probability_infertile < decision_threshold`
-- `primary_infertility_risk`: infertile-positive and `children_ever_born == 0`
-- `secondary_infertility_risk`: infertile-positive and `children_ever_born > 0`
+- `predicted_class` (`low_pregnancy_risk` | `high_pregnancy_risk`)
+- `probability_high_risk`
+- `probability_low_risk`
+- `risk_level` (`Low Risk` | `High Risk`)
+- `decision_threshold`
+- `emergency_threshold`
+- `advise_hospital_visit`
+- `advise_emergency_care`
+- `hospital_advice`
+- `emergency_advice`
+- `top_risk_factors`
+- `imputed_fields`
+- `model_version`
 
-## Error Responses
+## Follow-Up Endpoints (Authenticated)
 
-- `422`: validation error or incompatible input context
-- `503`: model artifacts unavailable
-- `500`: inference/internal error
+### 1) `POST /pregnancy/follow-up/assess`
 
-### Example 422 Case (Never-Cohabited With No Symptoms)
+Runs pregnancy prediction and stores the full assessment for the authenticated user.
 
-Request:
+Accepts all pregnancy request fields plus optional follow-up metadata:
 
-```json
-{
-  "age": 28,
-  "ever_cohabited": 0,
-  "children_ever_born": 0
-}
-```
+- `gestational_age_weeks` (1-45)
+- `visit_label` (1-120 chars)
+- `notes` (max 1000 chars)
 
-Response:
+Returns a stored assessment record with:
 
-```json
-{
-  "detail": "No model branch can be evaluated with the provided input. For never-cohabited users, provide at least one symptom field."
-}
-```
+- metadata (`assessment_id`, `created_at`, visit fields)
+- raw input values
+- prediction/probabilities
+- thresholds and advice flags/messages
+- `top_risk_factors`, `imputed_fields`, `model_version`
 
-## Usage (cURL)
+### 2) `GET /pregnancy/follow-up/history?limit=20`
+
+Returns stored assessments (newest first).
+
+Query params:
+
+- `limit` (1-200, default 20)
+
+Response keys:
+
+- `total_records`
+- `assessments` (array of stored assessment records)
+
+### 3) `GET /pregnancy/follow-up/compare/latest`
+
+Compares the latest assessment with the previous one.
+
+Response keys:
+
+- `latest_assessment_id`
+- `previous_assessment_id`
+- `latest_created_at`
+- `previous_created_at`
+- `latest_probability_high_risk`
+- `previous_probability_high_risk`
+- `probability_high_risk_delta`
+- `trend` (`increased` | `decreased` | `stable`)
+- `metric_deltas`
+
+If fewer than 2 records exist, returns `422`.
+
+### 4) `GET /pregnancy/follow-up/timeline/summary?limit=50`
+
+Returns chronological trend data for charting and follow-up monitoring.
+
+Query params:
+
+- `limit` (1-500, default 50)
+
+Response keys:
+
+- `total_records`
+- `time_span_days`
+- `high_risk_count`
+- `hospital_referral_count`
+- `emergency_referral_count`
+- `earliest_probability_high_risk`
+- `latest_probability_high_risk`
+- `probability_high_risk_change`
+- `trend` (`increased` | `decreased` | `stable` | `null`)
+- `points` (oldest to newest)
+
+## Example Requests
+
+### Signup
 
 ```bash
-curl -X POST "http://localhost:8000/predict/infertility" \
+curl -X POST "http://localhost:8000/auth/signup" \
   -H "Content-Type: application/json" \
   -d '{
-    "age": 28,
-    "ever_cohabited": 0,
-    "children_ever_born": 0,
-    "irregular_menstrual_cycles": 1,
-    "chronic_pelvic_pain": 1
+    "full_name": "Test User",
+    "email": "test.user@example.com",
+    "password": "StrongPass123"
   }'
+```
+
+### Pregnancy prediction
+
+```bash
+curl -X POST "http://localhost:8000/predict/pregnancy" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 31,
+    "systolic_bp": 140,
+    "diastolic": 90,
+    "bs": 10.2,
+    "body_temp": 99.0,
+    "bmi": 27.8,
+    "previous_complications": 1,
+    "preexisting_diabetes": 1,
+    "gestational_diabetes": 0,
+    "mental_health": 1,
+    "heart_rate": 86
+  }'
+```
+
+### Follow-up assess (authenticated)
+
+```bash
+curl -X POST "http://localhost:8000/pregnancy/follow-up/assess" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{
+    "gestational_age_weeks": 28,
+    "visit_label": "ANC Visit 2",
+    "notes": "Follow-up visit",
+    "age": 28,
+    "systolic_bp": 140,
+    "diastolic": 90,
+    "bs": 8.8,
+    "body_temp": 99.1,
+    "bmi": 25.1,
+    "previous_complications": 1,
+    "preexisting_diabetes": 0,
+    "gestational_diabetes": 0,
+    "mental_health": 1,
+    "heart_rate": 82
+  }'
+```
+
+## Error Semantics
+
+- `401`: missing/invalid/expired auth token
+- `409`: duplicate email on signup
+- `422`: validation failure or insufficient comparison history
+- `503`: required model artifacts missing
+- `500`: unexpected server error
+
+## Database Notes
+
+PostgreSQL stores authentication and follow-up data.
+
+Migration command:
+
+```bash
+alembic -c backend/alembic.ini upgrade head
 ```

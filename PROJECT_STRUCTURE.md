@@ -1,79 +1,74 @@
 # Project Structure
 
-## Complete Directory Structure
+This file reflects the current repository layout and primary responsibilities.
 
-```
+```text
 multi-stage-reproductive-health-risk-prediction/
-│
-├── backend/                          # FastAPI Backend
+├── backend/
+│   ├── alembic/
+│   │   └── versions/
 │   ├── api/
-│   │   └── routes/
-│   │       ├── health.py            # Health check
-│   │       ├── prediction.py        # Predictions
-│   │       └── model.py             # Model management
-│   ├── services/
-│   │   ├── prediction_service.py    # Prediction logic
-│   │   ├── preprocessing_service.py # Preprocessing
-│   │   └── model_service.py         # Model operations
-│   ├── models/
-│   │   ├── request.py               # Request schemas
-│   │   └── response.py              # Response schemas
-│   ├── utils/
-│   │   └── config.py                # Config & utilities
+│   │   └── routes/                     # legacy/experimental route modules
+│   ├── db/
+│   │   ├── base.py
+│   │   ├── models.py                   # users, sessions, pregnancy_assessments
+│   │   └── session.py                  # PostgreSQL engine/session
 │   ├── middleware/
-│   │   └── error_handler.py         # CORS & errors
+│   ├── models/
+│   │   ├── request.py                  # Pydantic request schemas
+│   │   └── response.py                 # Pydantic response schemas
+│   ├── services/
+│   │   ├── model_service.py            # artifact loading/model info
+│   │   ├── prediction_service.py       # infertility + pregnancy inference
+│   │   ├── pregnancy_tracking_service.py
+│   │   └── preprocessing_service.py
 │   ├── tests/
-│   │   ├── unit/
-│   │   │   └── test_services.py
 │   │   ├── integration/
-│   │   │   └── test_api.py
+│   │   ├── unit/
 │   │   └── conftest.py
-│   ├── logs/
-│   ├── main.py
 │   ├── .env.example
+│   ├── alembic.ini
+│   ├── main.py                         # active FastAPI app and routes
 │   └── README.md
-│
-├── notebooks/                        # ML Pipeline
-│   ├── 01_exploratory_data_analysis.py
-│   ├── 02_feature_engineering.py
-│   ├── 03_data_preprocessing.py
-│   ├── 04_model_training.py
-│   ├── 05_hyperparameter_tuning.py
-│   ├── 06_model_evaluation.py
-│   ├── infertility_risk_prediction.ipynb
-│   └── README.md
-│
-├── ml/                              # ML Models
-│   ├── infertility_model.pkl
-│   ├── scaler.pkl
-│   ├── feature_names.pkl
-│   └── model_metadata.pkl
-│
-├── data/                            # Data
-│   ├── raw/
+├── data/
 │   ├── processed/
+│   │   ├── Female infertility.csv
+│   │   ├── dhs_cleaned.csv
+│   │   ├── infertility_features_v1.csv
+│   │   └── pregnancy-risk-dataset.csv
 │   └── dhs_data_cleaning.py
-│
-├── frontend/                        # React Frontend
-│   └── ...
-│
-├── deployment/                      # Deployment
-├── docs/                            # Documentation
-├── evaluation/                      # Evaluation
-│
+├── docs/
+│   ├── API_DOCUMENTATION.md
+│   └── diagrams/
+├── evaluation/
+│   ├── infertility_v1/
+│   └── pregnancy_v1/
+├── frontend/
+│   ├── src/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── stores/
+│   │   └── styles/
+│   └── README.md
+├── ml/
+│   ├── infertility_v2_*.pkl            # Stage 1 production artifacts
+│   ├── pregnancy_v1_*.pkl              # Stage 2 production artifacts
+│   └── infertility_* legacy artifacts
+├── notebooks/
+│   ├── 01_...06_...                    # infertility v1 analysis/training flow
+│   ├── 07_infertility_fusion_training.py
+│   ├── 08_pregnancy_risk_training.py
+│   ├── 09_pregnancy_model_evaluation.py
+│   ├── run_infertility_v1_pipeline.py
+│   ├── run_pregnancy_v1_pipeline.py
+│   └── README.md
+├── requirements.txt
+├── LICENSE
 └── README.md
 ```
 
-## Key Components
+## Runtime Notes
 
-### Backend (23 files)
-- **3 API routes**: health, prediction, model
-- **3 services**: prediction, preprocessing, model
-- **2 schemas**: request, response
-- **1 utility**: config (includes logging, error handling)
-- **1 middleware**: error_handler (includes CORS)
-- **3 test files**: services, API, fixtures
-
-### Notebooks (6 files)
-- **Data prep (1-3)**: EDA, feature engineering, preprocessing
-- **Modeling (4-6)**: training, tuning, evaluation
+- The active API routes are registered in `backend/main.py`.
+- PostgreSQL is required for authentication and follow-up storage.
+- Integration tests are PostgreSQL-only.

@@ -1,0 +1,30 @@
+{
+  "model_path": "/Users/ineza/Documents/Anna/ALU/Capstone/multi-stage-reproductive-health-risk-prediction/ml/pregnancy_v1_model.pkl",
+  "metadata_path": "/Users/ineza/Documents/Anna/ALU/Capstone/multi-stage-reproductive-health-risk-prediction/ml/pregnancy_v1_metadata.pkl",
+  "threshold": 0.755,
+  "emergency_threshold": 0.9,
+  "roc_auc_test": 0.9997102289191538,
+  "pr_auc_test": 0.9995731968287743,
+  "cross_validation_summary": {
+    "test_accuracy": {
+      "mean": 0.9532207792207792,
+      "std": 0.022548910501773732
+    },
+    "test_precision": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "test_recall": {
+      "mean": 0.8841046277665996,
+      "std": 0.05604262883751384
+    },
+    "test_f1": {
+      "mean": 0.9377441361884926,
+      "std": 0.031255303862134466
+    },
+    "test_roc_auc": {
+      "mean": 0.998052896131367,
+      "std": 0.0016185286289580332
+    }
+  }
+}
