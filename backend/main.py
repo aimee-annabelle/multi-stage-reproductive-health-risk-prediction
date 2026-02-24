@@ -3,15 +3,19 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
+from sqlalchemy import delete, select, text
+from sqlalchemy.orm import Session
 import hashlib
 import hmac
-import joblib
-import numpy as np
-import os
 import re
 import secrets
-import sqlite3
-from typing import Dict
+
+from backend.models.request import InfertilityRequest
+from backend.models.response import InfertilityResponse
+from backend.db.models import AuthSession, User
+from backend.db.session import engine, get_db_session
+from backend.services.model_service import get_model_info, load_artifacts
+from backend.services.prediction_service import predict_infertility
 
 app = FastAPI(
     title="Reproductive Health Risk Prediction API",
@@ -27,58 +31,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-MODEL_DIR = os.path.join(BASE_DIR, "ml")
-AUTH_DB_PATH = os.path.join(os.path.dirname(__file__), "auth.db")
 PASSWORD_ITERATIONS = 310_000
 TOKEN_TTL_HOURS = 24
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
-model = None
-scaler = None
-feature_names = None
-metadata = None
 security = HTTPBearer(auto_error=False)
-
-
-class PatientSymptoms(BaseModel):
-    Age: int = Field(..., ge=18, le=100, description="Patient's age (18-100)")
-    Irregular_Menstrual_Cycles: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Hormonal_Imbalances: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Pelvic_Infections: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Endometriosis: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Uterine_Fibroids: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Blocked_Fallopian_Tubes: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Obesity: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Smoking_or_Alcohol: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Age_Related_Factors: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-    Male_Factor: int = Field(..., ge=0, le=1, description="0 = No, 1 = Yes")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "Age": 32,
-                "Irregular_Menstrual_Cycles": 1,
-                "Hormonal_Imbalances": 1,
-                "Pelvic_Infections": 0,
-                "Endometriosis": 0,
-                "Uterine_Fibroids": 0,
-                "Blocked_Fallopian_Tubes": 0,
-                "Obesity": 0,
-                "Smoking_or_Alcohol": 0,
-                "Age_Related_Factors": 0,
-                "Male_Factor": 0,
-            }
-        }
-
-
-class PredictionResponse(BaseModel):
-    prediction: str
-    risk_level: str
-    probability: float
-    confidence: str
-    message: str
-    feature_importance: Dict[str, float]
 
 
 class SignupRequest(BaseModel):
@@ -106,41 +63,6 @@ class AuthResponse(BaseModel):
     user: AuthUser
 
 
-def get_db() -> sqlite3.Connection:
-    conn = sqlite3.connect(AUTH_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT NOT NULL,
-            email TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
-            salt TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS sessions (
-            token TEXT PRIMARY KEY,
-            user_id INTEGER NOT NULL,
-            expires_at TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )
-        """
-    )
-    conn.commit()
-    return conn
-
-
-def init_auth_db() -> None:
-    conn = get_db()
-    conn.close()
-
-
 def hash_password(password: str, salt_hex: str) -> str:
     salt = bytes.fromhex(salt_hex)
     dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PASSWORD_ITERATIONS)
@@ -159,70 +81,56 @@ def validate_email(email: str) -> str:
     return clean_email
 
 
-def create_session(conn: sqlite3.Connection, user_id: int) -> tuple[str, int]:
+def create_auth_session(db: Session, user_id: int) -> tuple[str, int]:
     token = secrets.token_urlsafe(48)
     now = datetime.now(timezone.utc)
     expires = now + timedelta(hours=TOKEN_TTL_HOURS)
-    conn.execute(
-        "INSERT INTO sessions (token, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
-        (token, user_id, expires.isoformat(), now.isoformat()),
-    )
-    conn.commit()
+    db.add(AuthSession(token=token, user_id=user_id, expires_at=expires, created_at=now))
+    db.commit()
     return token, TOKEN_TTL_HOURS * 3600
 
 
-def row_to_user(row: sqlite3.Row) -> AuthUser:
-    return AuthUser(
-        id=row["id"],
-        full_name=row["full_name"],
-        email=row["email"],
-        created_at=row["created_at"],
-    )
+def user_to_response(user: User) -> AuthUser:
+    created_at = user.created_at.isoformat() if hasattr(user.created_at, "isoformat") else str(user.created_at)
+    return AuthUser(id=user.id, full_name=user.full_name, email=user.email, created_at=created_at)
 
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db_session),
 ) -> AuthUser:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid token")
 
-    conn = get_db()
-    try:
-        row = conn.execute(
-            """
-            SELECT u.id, u.full_name, u.email, u.created_at, s.expires_at
-            FROM sessions s
-            INNER JOIN users u ON u.id = s.user_id
-            WHERE s.token = ?
-            """,
-            (credentials.credentials,),
-        ).fetchone()
+    result = db.execute(
+        select(User, AuthSession)
+        .join(AuthSession, AuthSession.user_id == User.id)
+        .where(AuthSession.token == credentials.credentials)
+    ).first()
 
-        if row is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-        expires_at = datetime.fromisoformat(row["expires_at"])
-        if expires_at < datetime.now(timezone.utc):
-            conn.execute("DELETE FROM sessions WHERE token = ?", (credentials.credentials,))
-            conn.commit()
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+    user, auth_session = result
+    expires_at = auth_session.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
 
-        return row_to_user(row)
-    finally:
-        conn.close()
+    if expires_at < datetime.now(timezone.utc):
+        db.delete(auth_session)
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+
+    return user_to_response(user)
 
 
 @app.on_event("startup")
 async def startup() -> None:
-    global model, scaler, feature_names, metadata
-
-    init_auth_db()
     try:
-        model = joblib.load(os.path.join(MODEL_DIR, "infertility_model.pkl"))
-        scaler = joblib.load(os.path.join(MODEL_DIR, "scaler.pkl"))
-        feature_names = joblib.load(os.path.join(MODEL_DIR, "feature_names.pkl"))
-        metadata = joblib.load(os.path.join(MODEL_DIR, "model_metadata.pkl"))
-        print("Models loaded successfully!")
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        load_artifacts()
+        print("Infertility fusion artifacts loaded successfully.")
     except Exception as e:
         print(f"Error loading models: {e}")
         raise
@@ -247,70 +155,66 @@ async def root() -> dict:
 
 @app.get("/health")
 async def health_check() -> dict:
+    artifacts_loaded = True
+    try:
+        load_artifacts()
+    except Exception:
+        artifacts_loaded = False
+
     return {
         "status": "healthy",
-        "model_loaded": model is not None,
-        "scaler_loaded": scaler is not None,
+        "artifacts_loaded": artifacts_loaded,
     }
 
 
 @app.post("/auth/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def signup(payload: SignupRequest):
+async def signup(payload: SignupRequest, db: Session = Depends(get_db_session)):
     email = validate_email(payload.email)
-    conn = get_db()
-    try:
-        existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
-        if existing:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
-        salt_hex = secrets.token_hex(16)
-        password_hash = hash_password(payload.password, salt_hex)
-        created_at = datetime.now(timezone.utc).isoformat()
+    existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
-        cursor = conn.execute(
-            """
-            INSERT INTO users (full_name, email, password_hash, salt, created_at)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (payload.full_name.strip(), email, password_hash, salt_hex, created_at),
-        )
+    salt_hex = secrets.token_hex(16)
+    password_hash = hash_password(payload.password, salt_hex)
 
-        user_id = cursor.lastrowid
-        token, expires_in = create_session(conn, user_id)
+    user = User(
+        full_name=payload.full_name.strip(),
+        email=email,
+        password_hash=password_hash,
+        salt=salt_hex,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
-        user_row = conn.execute(
-            "SELECT id, full_name, email, created_at FROM users WHERE id = ?", (user_id,)
-        ).fetchone()
+    token, expires_in = create_auth_session(db, user.id)
 
-        return AuthResponse(
-            access_token=token,
-            token_type="bearer",
-            expires_in=expires_in,
-            user=row_to_user(user_row),
-        )
-    finally:
-        conn.close()
+    return AuthResponse(
+        access_token=token,
+        token_type="bearer",
+        expires_in=expires_in,
+        user=user_to_response(user),
+    )
 
 
 @app.post("/auth/login", response_model=AuthResponse)
-async def login(payload: LoginRequest):
+async def login(payload: LoginRequest, db: Session = Depends(get_db_session)):
     email = validate_email(payload.email)
-    conn = get_db()
-    try:
-        user_row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if user_row is None or not verify_password(payload.password, user_row["salt"], user_row["password_hash"]):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-        token, expires_in = create_session(conn, user_row["id"])
+    user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+    if user is None or not verify_password(payload.password, user.salt, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-        return AuthResponse(
-            access_token=token,
-            token_type="bearer",
-            expires_in=expires_in,
-            user=row_to_user(user_row),
-        )
-    finally:
-        conn.close()
+    token, expires_in = create_auth_session(db, user.id)
+
+    return AuthResponse(
+        access_token=token,
+        token_type="bearer",
+        expires_in=expires_in,
+        user=user_to_response(user),
+    )
 
 
 @app.get("/auth/me", response_model=AuthUser)
@@ -319,95 +223,39 @@ async def me(current_user: AuthUser = Depends(get_current_user)):
 
 
 @app.post("/auth/logout", status_code=status.HTTP_200_OK)
-async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db_session),
+):
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid token")
 
-    conn = get_db()
-    try:
-        conn.execute("DELETE FROM sessions WHERE token = ?", (credentials.credentials,))
-        conn.commit()
-        return {"message": "Logged out successfully"}
-    finally:
-        conn.close()
+    db.execute(delete(AuthSession).where(AuthSession.token == credentials.credentials))
+    db.commit()
+    return {"message": "Logged out successfully"}
 
 
 @app.get("/model/info")
 async def model_info():
-    if metadata is None:
-        raise HTTPException(status_code=500, detail="Model metadata not loaded")
-
-    return {
-        "model_name": metadata["model_name"],
-        "trained_date": metadata["trained_date"],
-        "features": metadata["features"],
-        "performance_metrics": metadata["performance_metrics"],
-        "training_info": metadata["training_info"],
-    }
-
-
-@app.post("/predict/infertility", response_model=PredictionResponse)
-async def predict_infertility(patient: PatientSymptoms):
-    if model is None or scaler is None:
-        raise HTTPException(status_code=500, detail="Models not loaded")
-
     try:
-        input_data = [
-            patient.Age,
-            patient.Irregular_Menstrual_Cycles,
-            patient.Hormonal_Imbalances,
-            patient.Pelvic_Infections,
-            patient.Endometriosis,
-            patient.Uterine_Fibroids,
-            patient.Blocked_Fallopian_Tubes,
-            patient.Obesity,
-            patient.Smoking_or_Alcohol,
-            patient.Age_Related_Factors,
-            patient.Male_Factor,
-        ]
+        return get_model_info()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Model info error: {exc}") from exc
 
-        input_array = np.array(input_data).reshape(1, -1)
-        input_scaled = scaler.transform(input_array)
 
-        prediction = model.predict(input_scaled)[0]
-        probability = model.predict_proba(input_scaled)[0]
-
-        risk_prob = probability[1]
-
-        if risk_prob >= 0.7:
-            risk_level = "High Risk"
-            confidence = "High Confidence"
-            message = "Patient shows multiple risk factors for infertility. Medical consultation strongly recommended."
-        elif risk_prob >= 0.5:
-            risk_level = "Moderate Risk"
-            confidence = "Moderate Confidence"
-            message = "Patient shows some risk factors for infertility. Consider consulting a healthcare provider."
-        else:
-            risk_level = "Low Risk"
-            confidence = "Moderate to High Confidence"
-            message = "Patient shows minimal risk factors for infertility based on provided symptoms."
-
-        feature_importance = {}
-        if hasattr(model, "feature_importances_"):
-            for i, name in enumerate(feature_names):
-                feature_importance[name] = float(model.feature_importances_[i])
-        elif hasattr(model, "coef_"):
-            for i, name in enumerate(feature_names):
-                feature_importance[name] = float(abs(model.coef_[0][i]))
-
-        feature_importance = dict(sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:5])
-
-        return PredictionResponse(
-            prediction="At Risk" if prediction == 1 else "No Risk",
-            risk_level=risk_level,
-            probability=round(risk_prob, 4),
-            confidence=confidence,
-            message=message,
-            feature_importance=feature_importance,
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+@app.post("/predict/infertility", response_model=InfertilityResponse)
+async def predict_infertility_route(payload: InfertilityRequest):
+    try:
+        prediction = predict_infertility(payload)
+        return InfertilityResponse(**prediction)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Prediction error: {exc}") from exc
 
 
 if __name__ == "__main__":

@@ -6,6 +6,13 @@ FastAPI backend for the Multi-Stage Reproductive Health Risk Prediction system.
 
 ```
 backend/
+├── alembic/                # Alembic migration scripts
+│   ├── env.py
+│   └── versions/
+├── db/
+│   ├── base.py             # SQLAlchemy declarative base
+│   ├── models.py           # PostgreSQL ORM models
+│   └── session.py          # Engine and session factory
 ├── api/
 │   └── routes/
 │       ├── health.py      # Health check endpoints
@@ -29,6 +36,7 @@ backend/
 │   │   └── test_api.py
 │   └── conftest.py
 ├── main.py
+├── alembic.ini
 ├── requirements.txt
 └── .env.example
 ```
@@ -46,8 +54,34 @@ pip install -r ../requirements.txt
 # Configure environment
 cp .env.example .env
 
+# Start PostgreSQL and update DB env vars in .env
+# (DATABASE_URL is recommended for deployed environments)
+
+# Run database migrations
+alembic -c backend/alembic.ini upgrade head
+
 # Run server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## Database
+
+Authentication data uses PostgreSQL.
+
+- Deployment: set `DATABASE_URL`
+- Local fallback: `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`
+
+## Migrations
+
+```bash
+# Apply latest schema
+alembic -c backend/alembic.ini upgrade head
+
+# Create a new migration after model changes
+alembic -c backend/alembic.ini revision --autogenerate -m "describe change"
+
+# Rollback one revision
+alembic -c backend/alembic.ini downgrade -1
 ```
 
 ## API Documentation

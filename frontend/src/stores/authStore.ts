@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { loginRequest, signupRequest, type AuthUser } from '../services/authApi'
+import { loginRequest, logoutRequest, signupRequest, type AuthUser } from '../services/authApi'
 
 type AuthState = {
   token: string | null
@@ -9,7 +9,7 @@ type AuthState = {
   error: string | null
   login: (email: string, password: string) => Promise<void>
   signup: (fullName: string, email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   clearError: () => void
 }
 
@@ -79,7 +79,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  logout: () => {
+  logout: async () => {
+    const currentToken = readSession().token
+    if (currentToken) {
+      try {
+        await logoutRequest(currentToken)
+      } catch {
+        // Clear local session regardless of backend logout errors.
+      }
+    }
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
     set({ token: null, user: null, isAuthenticated: false, error: null })

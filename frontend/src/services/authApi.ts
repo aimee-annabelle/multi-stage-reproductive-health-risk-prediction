@@ -25,7 +25,7 @@ type BackendAuthResponse = {
 }
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').trim() || 'http://localhost:8000'
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_AUTH !== 'false'
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_AUTH === 'true'
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -108,4 +108,22 @@ export async function signupRequest(fullName: string, email: string, password: s
 
   const payload = (await response.json()) as BackendAuthResponse
   return mapBackendAuthResponse(payload)
+}
+
+export async function logoutRequest(token: string): Promise<void> {
+  if (USE_MOCK) {
+    await wait(200)
+    return
+  }
+
+  const response = await fetch(`${API_BASE}/auth/logout`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    await parseApiError(response, 'Unable to logout right now.')
+  }
 }

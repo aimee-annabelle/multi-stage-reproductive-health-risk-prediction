@@ -9,6 +9,14 @@ Unified FastAPI documentation for infertility risk prediction using a cohabitati
 - Local: `http://localhost:8000`
 - Production: `[To be deployed]`
 
+## Database
+
+Authentication is persisted in PostgreSQL (not SQLite/NoSQL).
+
+- Use `DATABASE_URL` for deployed environments.
+- Or set local connection values: `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`.
+- Apply schema migrations with Alembic: `alembic -c backend/alembic.ini upgrade head`.
+
 ## Authentication
 
 The API now supports token-based authentication for user accounts:

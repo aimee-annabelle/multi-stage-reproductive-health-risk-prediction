@@ -12,13 +12,31 @@ const stageMeta: Record<HealthStage, { label: string; icon: string }> = {
 
 const stageOrder: HealthStage[] = ['infertility', 'pregnancy', 'postpartum']
 
-const stageFormFields: Record<HealthStage, Array<{ field: string; label: string; placeholder?: string }>> = {
+type StageField = {
+  field: string
+  label: string
+  placeholder?: string
+  inputType?: 'binary' | 'text'
+}
+
+const stageFormFields: Record<HealthStage, StageField[]> = {
   infertility: [
-    { field: 'cycleLength', label: 'Cycle Length (days)', placeholder: '28' },
-    { field: 'periodLength', label: 'Period Length (days)', placeholder: '5' },
-    { field: 'basalTemp', label: 'Basal Temperature (°F)', placeholder: '98.2' },
-    { field: 'lhLevel', label: 'LH Level (mIU/mL)', placeholder: '14' },
-    { field: 'symptoms', label: 'Symptoms', placeholder: 'e.g. severe cramps, irregular spotting' },
+    { field: 'age', label: 'Age', placeholder: '28', inputType: 'text' },
+    { field: 'childrenEverBorn', label: 'Children Ever Born', placeholder: '0', inputType: 'text' },
+    { field: 'bmi', label: 'BMI', placeholder: '24.5', inputType: 'text' },
+    { field: 'ageAtFirstMarriage', label: 'Age At First Marriage/Cohabitation', placeholder: '22', inputType: 'text' },
+    { field: 'monthsSinceFirstCohabitation', label: 'Months Since First Cohabitation', placeholder: '96', inputType: 'text' },
+    { field: 'monthsSinceLastSex', label: 'Months Since Last Sex', placeholder: '2', inputType: 'text' },
+    { field: 'everCohabited', label: 'Ever Cohabited', placeholder: '1', inputType: 'binary' },
+    { field: 'irregularMenstrualCycles', label: 'Irregular Menstrual Cycles', placeholder: '0', inputType: 'binary' },
+    { field: 'chronicPelvicPain', label: 'Chronic Pelvic Pain', placeholder: '0', inputType: 'binary' },
+    { field: 'historyPelvicInfections', label: 'History of Pelvic Infections', placeholder: '0', inputType: 'binary' },
+    { field: 'hormonalSymptoms', label: 'Hormonal Symptoms', placeholder: '0', inputType: 'binary' },
+    { field: 'earlyMenopauseSymptoms', label: 'Early Menopause Symptoms', placeholder: '0', inputType: 'binary' },
+    { field: 'autoimmuneHistory', label: 'Autoimmune History', placeholder: '0', inputType: 'binary' },
+    { field: 'reproductiveSurgeryHistory', label: 'Reproductive Surgery History', placeholder: '0', inputType: 'binary' },
+    { field: 'smokedLast12mo', label: 'Smoked Last 12 Months', placeholder: '0', inputType: 'binary' },
+    { field: 'alcoholLast12mo', label: 'Alcohol Last 12 Months', placeholder: '0', inputType: 'binary' },
   ],
   pregnancy: [
     { field: 'currentWeek', label: 'Current Week', placeholder: 'Week 1-40' },
@@ -34,6 +52,15 @@ const stageFormFields: Record<HealthStage, Array<{ field: string; label: string;
   ],
 }
 
+const historicalInfertilityFields = new Set([
+  'bmi',
+  'smokedLast12mo',
+  'alcoholLast12mo',
+  'ageAtFirstMarriage',
+  'monthsSinceFirstCohabitation',
+  'monthsSinceLastSex',
+])
+
 export default function DashboardPage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
@@ -45,6 +72,8 @@ export default function DashboardPage() {
   const setField = useDashboardStore((state) => state.setField)
   const assessRisk = useDashboardStore((state) => state.assessRisk)
   const resetAssessment = useDashboardStore((state) => state.resetAssessment)
+  const isAssessing = useDashboardStore((state) => state.isAssessing)
+  const assessmentError = useDashboardStore((state) => state.assessmentError)
 
   const firstName = user?.fullName?.split(' ')[0] || 'Sarah'
 
@@ -65,14 +94,28 @@ export default function DashboardPage() {
       .join(' ')
   }, [wellnessPoints])
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/sign-in')
   }
 
   const activeFormValues = formValues[selectedStage]
   const activeFields = stageFormFields[selectedStage]
   const stageIndex = stageOrder.indexOf(selectedStage)
+  const standardInfertilityFields = selectedStage === 'infertility'
+    ? activeFields.filter((item) => item.inputType !== 'binary')
+    : []
+  const binaryInfertilityFields = selectedStage === 'infertility'
+    ? activeFields.filter((item) => item.inputType === 'binary')
+    : []
+  const hideHistoricalInputs =
+    selectedStage === 'infertility' && activeFormValues.everCohabited === '0'
+  const visibleStandardInfertilityFields = hideHistoricalInputs
+    ? standardInfertilityFields.filter((item) => !historicalInfertilityFields.has(item.field))
+    : standardInfertilityFields
+  const visibleBinaryInfertilityFields = hideHistoricalInputs
+    ? binaryInfertilityFields.filter((item) => !historicalInfertilityFields.has(item.field))
+    : binaryInfertilityFields
 
   return (
     <div className="dashboard-page">
@@ -146,7 +189,7 @@ export default function DashboardPage() {
               className="assessment-form"
               onSubmit={(event) => {
                 event.preventDefault()
-                assessRisk()
+                void assessRisk()
               }}
             >
               <div className="assessment-form-top">
@@ -171,24 +214,84 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="dynamic-field-grid">
-                {activeFields.map((item) => (
-                  <label
-                    key={item.field}
-                    className={item.field === 'symptoms' ? 'full-width' : undefined}
-                  >
-                    {item.label}
-                    <input
-                      value={activeFormValues[item.field] || ''}
-                      placeholder={item.placeholder}
-                      onChange={(event) => setField(item.field, event.target.value)}
-                    />
-                  </label>
-                ))}
-              </div>
+              {selectedStage === 'infertility' ? (
+                <div className="assessment-sections">
+                  <section className="assessment-group">
+                    <p className="assessment-group-title">Clinical Inputs</p>
+                    {hideHistoricalInputs ? (
+                      <p className="assessment-group-note">
+                        Historical cohabitation inputs are hidden because Ever Cohabited is set to No.
+                      </p>
+                    ) : null}
+                    <div className="dynamic-field-grid">
+                      {visibleStandardInfertilityFields.map((item) => (
+                        <label key={item.field}>
+                          <span>{item.label}</span>
+                          <input
+                            value={activeFormValues[item.field] || ''}
+                            placeholder={item.placeholder}
+                            onChange={(event) => setField(item.field, event.target.value)}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="assessment-group">
+                    <p className="assessment-group-title">Yes/No Indicators</p>
+                    <div className="binary-field-grid">
+                      {visibleBinaryInfertilityFields.map((item) => (
+                        <label key={item.field} className="binary-field">
+                          <span>{item.label}</span>
+                          <div className="yes-no-switch" role="group" aria-label={item.label}>
+                            <label className="radio-option">
+                              <input
+                                type="radio"
+                                name={item.field}
+                                checked={activeFormValues[item.field] === '1'}
+                                onChange={() => setField(item.field, '1')}
+                              />
+                              <span>Yes</span>
+                            </label>
+                            <label className="radio-option">
+                              <input
+                                type="radio"
+                                name={item.field}
+                                checked={activeFormValues[item.field] === '0'}
+                                onChange={() => setField(item.field, '0')}
+                              />
+                              <span>No</span>
+                            </label>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              ) : (
+                <div className="dynamic-field-grid">
+                  {activeFields.map((item) => (
+                    <label
+                      key={item.field}
+                      className={item.field === 'symptoms' ? 'full-width' : undefined}
+                    >
+                      <span>{item.label}</span>
+                      <input
+                        value={activeFormValues[item.field] || ''}
+                        placeholder={item.placeholder}
+                        onChange={(event) => setField(item.field, event.target.value)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {assessmentError ? <p className="assessment-error">{assessmentError}</p> : null}
 
               <div className="form-actions">
-                <button type="submit" className="primary-btn block">Assess Risk</button>
+                <button type="submit" className="primary-btn block" disabled={isAssessing}>
+                  {isAssessing ? 'Assessing...' : 'Assess Risk'}
+                </button>
                 <button type="button" className="ghost-btn block" onClick={resetAssessment}>Reset</button>
               </div>
             </form>
