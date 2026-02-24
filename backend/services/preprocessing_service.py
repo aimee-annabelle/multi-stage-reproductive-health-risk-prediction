@@ -106,8 +106,16 @@ def prepare_v2_inputs(
 
 
 def _normalize_pregnancy_payload(request: PregnancyRequest) -> Dict[str, Any]:
+    """
+    Normalize and validate pregnancy request payload.
+
+    BMI values less than or equal to zero are not physiologically valid and are
+    treated as missing data. They are converted to None here so that downstream
+    preprocessing/imputation can handle them in a consistent way.
+    """
     payload = request.model_dump()
 
+    # Treat non-positive BMI values as missing so they are handled by imputation.
     if payload.get("bmi") is not None and payload["bmi"] <= 0:
         payload["bmi"] = None
 
