@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,8 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 import hashlib
 import hmac
+import logging
+import os
 import re
 import secrets
 
@@ -17,15 +20,39 @@ from backend.db.session import engine, get_db_session
 from backend.services.model_service import get_model_info, load_artifacts
 from backend.services.prediction_service import predict_infertility
 
+logger = logging.getLogger(__name__)
+
+
+def parse_cors_origins() -> list[str]:
+    raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    return origins or ["http://localhost:5173", "http://localhost:3000"]
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        load_artifacts()
+        logger.info("Infertility fusion artifacts loaded successfully.")
+    except Exception:
+        logger.exception("Error loading models during startup")
+        raise
+
+    yield
+
+
 app = FastAPI(
     title="Reproductive Health Risk Prediction API",
     description="API for predicting infertility risk based on symptoms and health indicators",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=parse_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -122,18 +149,6 @@ def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
 
     return user_to_response(user)
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        load_artifacts()
-        print("Infertility fusion artifacts loaded successfully.")
-    except Exception as e:
-        print(f"Error loading models: {e}")
-        raise
 
 
 @app.get("/")
@@ -242,7 +257,8 @@ async def model_info():
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Model info error: {exc}") from exc
+        logger.exception("Model info error")
+        raise HTTPException(status_code=500, detail="Model info error") from exc
 
 
 @app.post("/predict/infertility", response_model=InfertilityResponse)
@@ -255,7 +271,8 @@ async def predict_infertility_route(payload: InfertilityRequest):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Prediction error: {exc}") from exc
+        logger.exception("Prediction error")
+        raise HTTPException(status_code=500, detail="Prediction error") from exc
 
 
 if __name__ == "__main__":

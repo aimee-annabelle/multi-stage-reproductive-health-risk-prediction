@@ -101,9 +101,12 @@ def load_hospital_data(data_dir: Path) -> pd.DataFrame:
 def load_dhs_data(data_dir: Path) -> pd.DataFrame:
     df = pd.read_csv(data_dir / "dhs_cleaned.csv")
 
-    # DHS v445 BMI is often stored as BMI*100. Normalize to human-readable units.
+    # DHS v445 BMI is often stored as BMI*100. Normalize to human-readable units
+    # only when values are clearly in BMI*100 format, to match inference-time
+    # preprocessing behavior.
     if "bmi" in df.columns:
-        df["bmi"] = df["bmi"].where(df["bmi"].isna(), df["bmi"] / 100.0)
+        bmi = df["bmi"]
+        df["bmi"] = np.where(bmi > 100, bmi / 100.0, bmi)
 
     return df[[*HISTORY_FEATURES, "infertile"]].copy()
 

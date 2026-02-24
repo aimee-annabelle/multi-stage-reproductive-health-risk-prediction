@@ -18,7 +18,7 @@
     "Reproductive_Surgery_History",
     "Unexplained_Difficulty_Conceiving"
   ],
-  "training_date": "2026-02-23",
+  "training_date": "2026-02-24",
   "training_samples": 528,
   "test_samples": 177
 }

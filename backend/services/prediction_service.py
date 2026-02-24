@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from backend.models.request import InfertilityRequest
 from backend.services.model_service import get_artifacts
@@ -21,7 +21,7 @@ def _risk_level(probability: float, threshold: float) -> str:
 def _collect_top_factors(
     payload: Dict[str, Any],
     feature_importance: Dict[str, Dict[str, float]],
-    models_used: list[str],
+    models_used: List[str],
     fusion_weights: Dict[str, float],
     top_n: int = 5,
 ) -> Dict[str, float]:

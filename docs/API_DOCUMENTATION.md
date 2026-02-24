@@ -143,6 +143,11 @@ Maternal dataset is excluded from this infertility endpoint.
 - `autoimmune_history`
 - `reproductive_surgery_history`
 
+Important rule for never-cohabited users:
+
+- If `ever_cohabited = 0`, you must provide at least one symptom field above.
+- If none are provided, the API returns `422` because no model branch can be evaluated.
+
 ### Optional history fields
 
 - `bmi`
@@ -198,6 +203,26 @@ If history fields are omitted, model-side imputation is applied.
 - `422`: validation error or incompatible input context
 - `503`: model artifacts unavailable
 - `500`: inference/internal error
+
+### Example 422 Case (Never-Cohabited With No Symptoms)
+
+Request:
+
+```json
+{
+  "age": 28,
+  "ever_cohabited": 0,
+  "children_ever_born": 0
+}
+```
+
+Response:
+
+```json
+{
+  "detail": "No model branch can be evaluated with the provided input. For never-cohabited users, provide at least one symptom field."
+}
+```
 
 ## Usage (cURL)
 

@@ -95,3 +95,14 @@ def test_predict_never_cohabited_symptom_only(client) -> None:
     body = response.json()
     assert body["models_used"] == ["symptom"]
     assert body["assessment_mode"] == "symptom_only"
+
+
+def test_predict_never_cohabited_no_symptoms_returns_422(client) -> None:
+    payload = {
+        "age": 28,
+        "ever_cohabited": 0,
+        "children_ever_born": 0,
+    }
+
+    response = client.post("/predict/infertility", json=payload)
+    assert response.status_code == 422

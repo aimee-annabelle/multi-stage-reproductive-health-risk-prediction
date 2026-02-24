@@ -42,8 +42,11 @@ class InfertilityRequest(BaseModel):
     bmi: float | None = Field(
         default=None,
         ge=10.0,
-        le=80.0,
-        description="Body Mass Index (kg/m^2). If DHS format (BMI*100) is provided, it is normalized.",
+        le=8000.0,
+        description=(
+            "Body Mass Index (kg/m^2). Supports standard BMI (10-80) and legacy DHS "
+            "encoding (BMI*100 up to 8000), which is normalized during preprocessing."
+        ),
     )
     smoked_last_12mo: int | None = Field(
         default=None, ge=0, le=1, description="0=No, 1=Yes"
