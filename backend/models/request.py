@@ -86,3 +86,94 @@ class InfertilityRequest(BaseModel):
             )
 
         return self
+
+
+class PregnancyRequest(BaseModel):
+    """Request payload for pregnancy risk prediction endpoint."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    age: int = Field(..., ge=10, le=65, description="Maternal age in years")
+    systolic_bp: float = Field(
+        ...,
+        ge=70.0,
+        le=200.0,
+        description="Systolic blood pressure (mmHg)",
+    )
+    diastolic: float = Field(
+        ...,
+        ge=40.0,
+        le=140.0,
+        description="Diastolic blood pressure (mmHg)",
+    )
+
+    bs: float | None = Field(
+        default=None,
+        ge=3.0,
+        le=19.0,
+        description="Blood sugar level",
+    )
+    body_temp: float | None = Field(
+        default=None,
+        ge=95.0,
+        le=105.0,
+        description="Body temperature in Fahrenheit",
+    )
+    bmi: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=60.0,
+        description="Body Mass Index (kg/m^2). Values <= 0 are treated as missing.",
+    )
+    previous_complications: int | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="History of previous pregnancy complications: 0=No, 1=Yes",
+    )
+    preexisting_diabetes: int | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="Preexisting diabetes before pregnancy: 0=No, 1=Yes",
+    )
+    gestational_diabetes: int | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="Gestational diabetes during current pregnancy: 0=No, 1=Yes",
+    )
+    mental_health: int | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="Mental health risk indicator: 0=No, 1=Yes",
+    )
+    heart_rate: float | None = Field(
+        default=None,
+        ge=40.0,
+        le=140.0,
+        description="Heart rate (beats per minute)",
+    )
+
+
+class PregnancyFollowUpRequest(PregnancyRequest):
+    """Pregnancy assessment payload enriched with follow-up metadata."""
+
+    gestational_age_weeks: int | None = Field(
+        default=None,
+        ge=1,
+        le=45,
+        description="Current pregnancy week for maternal follow-up tracking",
+    )
+    visit_label: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=120,
+        description="Optional user-defined visit label (for example: ANC visit 3)",
+    )
+    notes: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional follow-up notes for this assessment",
+    )

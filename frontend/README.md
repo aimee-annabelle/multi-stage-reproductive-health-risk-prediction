@@ -1,77 +1,76 @@
-# Frontend - React + TypeScript Starter
+# Frontend
 
-Clean React + TypeScript setup with modern tooling.
+React + TypeScript frontend for the reproductive health prediction system.
 
 ## Tech Stack
 
-- **React 18** with TypeScript
-- **Vite** - Fast build tool and dev server
-- **TailwindCSS v4** - Modern utility-first CSS framework
-- **Zustand** - Lightweight state management (installed, ready to use)
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS v4
+- React Router
+- Zustand
 
-## Getting Started
-
-### Installation
+## Setup
 
 ```bash
 cd frontend
 npm install
 ```
 
-### Development
+## Run
 
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+Default dev URL: `http://localhost:5173`
 
-### Build
+## Build
 
 ```bash
 npm run build
+npm run preview
 ```
 
-The production build will be in the `dist/` directory.
+## Current App Structure
 
-## Project Structure
-
+```text
+frontend/src/
+├── App.tsx
+├── main.tsx
+├── pages/
+│   ├── LandingPage.tsx
+│   ├── SignInPage.tsx
+│   ├── SignUpPage.tsx
+│   └── DashboardPage.tsx
+├── services/
+│   ├── authApi.ts
+│   └── infertilityApi.ts
+├── stores/
+│   ├── authStore.ts
+│   └── dashboardStore.ts
+├── styles/
+│   ├── auth.css
+│   ├── dashboard.css
+│   └── landing.css
+└── assets/
 ```
-frontend/
-├── src/
-│   ├── App.tsx           # Main application component
-│   ├── main.tsx          # Application entry point
-│   └── index.css         # TailwindCSS + custom styles
-├── index.html
-├── package.json
-├── tsconfig.json         # TypeScript configuration
-├── vite.config.ts        # Vite configuration
-└── README.md
-```
 
-## Features
+## Routing
 
-- **Vite** - Lightning-fast HMR and optimized builds
-- **TailwindCSS v4** - Latest version with `@import "tailwindcss"` syntax
-- **TypeScript** - Full type safety
-- **Zustand** - Simple state management (when you need it)
-- **ESLint** - Code quality
-- **Hot Module Replacement** - Instant updates during development
+- `/` landing page
+- `/sign-in` sign-in page
+- `/sign-up` sign-up page
+- `/dashboard` protected route (requires auth state)
 
-## Custom Styles
+## Backend Integration
 
-The project includes custom utility classes in `src/index.css`:
+The frontend consumes backend endpoints from `backend/main.py`.
 
-- `.glass-card` - Glassmorphism effect with backdrop blur
-- `.gradient-text` - Gradient text effect
+Typical local setup:
 
-## Next Steps
+- Backend: `http://localhost:8000`
+- Frontend: `http://localhost:5173`
 
-1. Create your components in `src/`
-2. Add routes if needed (install `react-router-dom`)
-3. Use Zustand for state management when needed
-4. Build your application!
-
-## License
-
-MIT License
+Make sure backend CORS allows frontend origin (`CORS_ORIGINS`).
