@@ -288,10 +288,82 @@
   font-size: 14px;
 }
 
+.yes-no-switch {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: 2px;
+}
+
+.assessment-form label.radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #3f5575;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0;
+}
+
+.assessment-form label.radio-option input[type='radio'] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: #d62a86;
+}
+
+.assessment-form label.binary-field {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.assessment-form label.binary-field > span {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
 .dynamic-field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.assessment-sections {
+  display: grid;
+  gap: 14px;
+}
+
+.assessment-group {
+  border: 1px solid #e5ebf3;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfcfe;
+}
+
+.assessment-group-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: #6a7f9e;
+}
+
+.assessment-group-note {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #5f7392;
+}
+
+.binary-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
 }
 
 .dynamic-field-grid .full-width {
@@ -305,9 +377,22 @@
   gap: 10px;
 }
 
+.assessment-error {
+  margin: 10px 0 0;
+  color: #b3261e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .primary-btn.block,
 .ghost-btn.block {
   width: 100%;
+}
+
+.primary-btn:disabled,
+.ghost-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .empty-result,
@@ -481,6 +566,14 @@
   .stage-tabs,
   .dynamic-field-grid {
     grid-template-columns: 1fr;
+  }
+
+  .binary-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .assessment-form label.binary-field {
+    flex-wrap: wrap;
   }
 
   .dashboard-brand {

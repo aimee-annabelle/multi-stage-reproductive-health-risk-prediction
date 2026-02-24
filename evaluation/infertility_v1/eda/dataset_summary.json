@@ -1,0 +1,29 @@
+{
+  "rows": 705,
+  "columns": 13,
+  "target_distribution": {
+    "1": 579,
+    "0": 126
+  },
+  "missing_values": {
+    "Patient ID": 0,
+    "Age": 0,
+    "Irregular_Menstrual_Cycles": 0,
+    "Tubal_Issues_Risk": 0,
+    "Chronic_Pelvic_Pain": 0,
+    "Uterine_Issues_Risk": 0,
+    "History_Pelvic_Infections": 0,
+    "Hormonal_Symptoms": 0,
+    "Early_Menopause_Risk": 0,
+    "Autoimmune_History": 0,
+    "Reproductive_Surgery_History": 0,
+    "Unexplained_Difficulty_Conceiving": 0,
+    "Infertility_Prediction": 0
+  },
+  "age": {
+    "min": 25.0,
+    "max": 60.0,
+    "mean": 37.44113475177305,
+    "median": 35.0
+  }
+}

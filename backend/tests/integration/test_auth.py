@@ -1,5 +1,7 @@
-import os
+from sqlalchemy import delete
 
+from backend.db.models import AuthSession, User
+from backend.db.session import SessionLocal
 from fastapi.testclient import TestClient
 
 from backend.main import app
@@ -9,10 +11,13 @@ client = TestClient(app)
 
 
 def _cleanup_auth_db() -> None:
-    db_path = os.path.join(os.path.dirname(__file__), "..", "..", "auth.db")
-    db_path = os.path.abspath(db_path)
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    db = SessionLocal()
+    try:
+        db.execute(delete(AuthSession))
+        db.execute(delete(User))
+        db.commit()
+    finally:
+        db.close()
 
 
 def setup_module() -> None:

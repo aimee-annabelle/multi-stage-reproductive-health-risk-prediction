@@ -1,0 +1,14 @@
+feature,mutual_information
+Symptom_Burden_Score,0.13554439479268554
+Unexplained_Difficulty_Conceiving,0.13527157237410514
+Age_x_Symptom_Burden,0.12016770214763972
+Reproductive_Surgery_History,0.05829759297202286
+Irregular_Menstrual_Cycles,0.0379211909985806
+Hormonal_Symptoms,0.011668434590255128
+Age,0.010384706906674479
+Chronic_Pelvic_Pain,0.009860984714902488
+Early_Menopause_Risk,0.005590189604006701
+Autoimmune_History,0.005428918626998902
+History_Pelvic_Infections,0.0007846186307913783
+Tubal_Issues_Risk,0.0
+Uterine_Issues_Risk,0.0

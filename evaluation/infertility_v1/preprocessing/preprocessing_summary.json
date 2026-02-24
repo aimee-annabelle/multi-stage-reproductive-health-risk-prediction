@@ -1,0 +1,31 @@
+{
+  "input_dataset": "data/processed/infertility_features_v1.csv",
+  "train_rows": 528,
+  "test_rows": 177,
+  "test_size": 0.25,
+  "random_state": 42,
+  "target_distribution_train": {
+    "1": 434,
+    "0": 94
+  },
+  "target_distribution_test": {
+    "1": 145,
+    "0": 32
+  },
+  "scaled_columns": [
+    "Age"
+  ],
+  "feature_columns": [
+    "Age",
+    "Irregular_Menstrual_Cycles",
+    "Tubal_Issues_Risk",
+    "Chronic_Pelvic_Pain",
+    "Uterine_Issues_Risk",
+    "History_Pelvic_Infections",
+    "Hormonal_Symptoms",
+    "Early_Menopause_Risk",
+    "Autoimmune_History",
+    "Reproductive_Surgery_History",
+    "Unexplained_Difficulty_Conceiving"
+  ]
+}

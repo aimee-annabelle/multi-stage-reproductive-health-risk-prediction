@@ -29,6 +29,22 @@ jupyter notebook
 
 Execute notebooks in sequential order (01-06). Each notebook builds on the previous ones.
 
+Or run the full infertility v1 pipeline and auto-generate a consolidated report:
+
+```bash
+python notebooks/run_infertility_v1_pipeline.py
+```
+
+Useful flags:
+
+```bash
+# Skip hyperparameter tuning stage (faster)
+python notebooks/run_infertility_v1_pipeline.py --skip-tuning
+
+# Rebuild only the consolidated report from existing outputs
+python notebooks/run_infertility_v1_pipeline.py --report-only
+```
+
 ## Output
 
 - Processed data → `../data/processed/`
