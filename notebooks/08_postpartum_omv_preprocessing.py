@@ -121,7 +121,7 @@ def _normalize_string(value: Any) -> Any:
     if not isinstance(value, str):
         return value
 
-    text = re.sub(r"\\s+", " ", value.strip())
+    text = re.sub(r"\s+", " ", value.strip())
     lowered = text.lower()
 
     if lowered in PLACEHOLDER_TOKENS:
@@ -193,6 +193,7 @@ def _build_feature_group(col: str) -> str:
         "interpregnancy",
         "children",
         "miscarriges",
+        "miscarriages",
     ]
 
     if any(k in name for k in psych_keys):
