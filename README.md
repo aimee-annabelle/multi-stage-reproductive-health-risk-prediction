@@ -11,6 +11,7 @@ This project implements a multi-stage backend for reproductive health risk suppo
 
 - Stage 1: Infertility risk prediction (dual-branch fusion)
 - Stage 2: Pregnancy risk prediction (single-model binary classifier)
+- Stage 3: Postpartum risk prediction (single-model binary classifier)
 - Authenticated pregnancy follow-up tracking over time
 
 The API is built with FastAPI and SQLAlchemy, and uses persisted model artifacts from the `ml/` directory.
@@ -41,6 +42,20 @@ The API is built with FastAPI and SQLAlchemy, and uses persisted model artifacts
   - referral/emergency advice flags and messages
 - Metadata endpoint: `GET /model/info/pregnancy`
 
+### Stage 3: Postpartum Prediction
+
+- Endpoint: `POST /predict/postpartum`
+- Binary output classes:
+  - `low_postpartum_risk`
+  - `high_postpartum_risk`
+- Supports partial payloads with model-side imputation
+- Returns:
+  - decision threshold
+  - emergency threshold
+  - top risk factors
+  - referral/emergency advice flags and messages
+- Metadata endpoint: `GET /model/info/postpartum`
+
 ### Authentication and Follow-Up Tracking
 
 - Auth endpoints:
@@ -66,7 +81,8 @@ multi-stage-reproductive-health-risk-prediction/
 ├── docs/
 ├── evaluation/
 │   ├── infertility_v1/
-│   └── pregnancy_v1/
+│   ├── pregnancy_v1/
+│   └── postpartum_v1/
 ├── frontend/
 ├── ml/
 ├── notebooks/
@@ -140,11 +156,18 @@ python notebooks/07_infertility_fusion_training.py
 python notebooks/08_pregnancy_risk_training.py
 ```
 
+### Train postpartum v1 artifacts
+
+```bash
+python notebooks/run_postpartum_v1_pipeline.py
+```
+
 ### Generate evaluation reports
 
 ```bash
 python notebooks/run_infertility_v1_pipeline.py
 python notebooks/run_pregnancy_v1_pipeline.py
+python notebooks/run_postpartum_v1_pipeline.py
 ```
 
 ## API Endpoints
@@ -159,8 +182,10 @@ python notebooks/run_pregnancy_v1_pipeline.py
 | POST | `/auth/logout` | Logout |
 | GET | `/model/info` | Infertility model metadata |
 | GET | `/model/info/pregnancy` | Pregnancy model metadata |
+| GET | `/model/info/postpartum` | Postpartum model metadata |
 | POST | `/predict/infertility` | Infertility risk prediction |
 | POST | `/predict/pregnancy` | Pregnancy risk prediction |
+| POST | `/predict/postpartum` | Postpartum risk prediction |
 | POST | `/pregnancy/follow-up/assess` | Predict + store pregnancy assessment |
 | GET | `/pregnancy/follow-up/history` | List stored pregnancy assessments |
 | GET | `/pregnancy/follow-up/compare/latest` | Compare latest two assessments |
@@ -187,17 +212,22 @@ pytest
 - `pregnancy_v1_model.pkl`
 - `pregnancy_v1_metadata.pkl`
 - `pregnancy_v1_feature_schema.pkl`
+- `postpartum_v1_model.pkl`
+- `postpartum_v1_metadata.pkl`
+- `postpartum_v1_feature_schema.pkl`
 
 ### Evaluation reports
 
 - `evaluation/infertility_v1/INFERTILITY_V1_REPORT.md`
 - `evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md`
+- `evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md`
 
 ## Datasets Used
 
 - `data/processed/Female infertility.csv`
 - `data/processed/dhs_cleaned.csv`
 - `data/processed/pregnancy-risk-dataset.csv`
+- `data/processed/postpartum_omv_cleaned.csv`
 
 ## Disclaimer
 

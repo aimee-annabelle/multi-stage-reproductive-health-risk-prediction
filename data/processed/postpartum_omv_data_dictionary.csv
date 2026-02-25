@@ -1,0 +1,51 @@
+column,group,dtype,missing_ratio
+Age (y),sociodemographic_context,object,0.12660550458715597
+Baby age in months,physiological_clinical,float64,0.012844036697247707
+Marital status,sociodemographic_context,object,0.07155963302752294
+What is the household income,sociodemographic_context,object,0.06972477064220184
+Level of education,sociodemographic_context,object,0.07522935779816514
+Nationality,sociodemographic_context,object,0.03669724770642202
+Residency,sociodemographic_context,object,0.14495412844036698
+comorbidities,physiological_clinical,object,0.03669724770642202
+Smoke cigarattes,sociodemographic_context,object,0.13211009174311927
+Smoke Shish,sociodemographic_context,object,0.14128440366972478
+Kgs gained during pregnancy,physiological_clinical,float64,0.009174311926605505
+The current pregnancy was,sociodemographic_context,object,0.03486238532110092
+Do you suffer from any disease or mental or psychiatric disorder (choose all that applies),psychological,object,0.03853211009174312
+Number of children alive,physiological_clinical,object,0.03486238532110092
+Number of miscarriges,physiological_clinical,object,0.031192660550458717
+Number of children who died,physiological_clinical,object,0.12660550458715597
+Interpregnancy space,physiological_clinical,object,0.04036697247706422
+Type of the last delivery,physiological_clinical,object,0.12660550458715597
+Premature labour,physiological_clinical,object,0.11743119266055047
+Healty baby,physiological_clinical,object,0.11926605504587157
+Baby admitted in the NICU,physiological_clinical,object,0.11559633027522936
+Baby had feeding difficluties,physiological_clinical,object,0.12844036697247707
+Pregnancy problem?,physiological_clinical,object,0.11376146788990826
+Postnatal problems?,physiological_clinical,object,0.11376146788990826
+Natal problems?,physiological_clinical,object,0.11376146788990826
+problems with husband?,psychological,object,0.11926605504587157
+financial problems?,psychological,object,0.11926605504587157
+family problems?,psychological,object,0.10642201834862386
+got COVID-19?,sociodemographic_context,object,0.11376146788990826
+got COVID-19 vaccine?,sociodemographic_context,object,0.11009174311926606
+The nature of baby's feeding,physiological_clinical,object,0.023853211009174313
+I have been able to laugh and see the funny side of things,sociodemographic_context,object,0.022018348623853212
+I have looked forward with enjoyment to things,sociodemographic_context,object,0.044036697247706424
+I have blamed myself unnecessarily when things went wrong,sociodemographic_context,object,0.01651376146788991
+I have been anxious or worried for no good reason,psychological,object,0.04220183486238532
+I have felt scared or panicky for no very good reason,psychological,object,0.012844036697247707
+Things have been getting on top of me,sociodemographic_context,object,0.04036697247706422
+I have been so unhappy that I have had difficulty sleeping,psychological,object,0.01834862385321101
+I have felt sad or miserable,psychological,object,0.04220183486238532
+I have been so unhappy that I have been crying,psychological,object,0.027522935779816515
+Thought of harming myself has occurred to me,psychological,object,0.044036697247706424
+Do you have access to healthcare services,sociodemographic_context,object,0.01651376146788991
+Are you aware of the symptoms and risk factors associated with postpartum depression,psychological,object,0.09908256880733946
+"Do you feel comfortable discussing mental health [yes , with my husband]",psychological,object,0.04220183486238532
+"Do you feel comfortable discussing mental health [yes , with my family]",psychological,object,0.06422018348623854
+"Do you feel comfortable discussing mental health [yes , at all the community]",psychological,object,0.04036697247706422
+"Do you feel comfortable discussing mental health [yes, with my physician]",psychological,object,0.060550458715596334
+Have you experienced any cultural stigma or judgment surrounding postpartum depression within your community,psychological,object,0.11192660550458716
+Have you received any support or treatment for postpartum depression,psychological,object,0.13394495412844037
+ppd_risk,target,int64,0.0

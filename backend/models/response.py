@@ -66,6 +66,34 @@ class PregnancyResponse(BaseModel):
     model_version: str = Field(..., description="Model artifact version")
 
 
+class PostpartumResponse(BaseModel):
+    """Response payload for postpartum risk prediction endpoint."""
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    predicted_class: Literal["low_postpartum_risk", "high_postpartum_risk"] = Field(
+        ..., description="Final postpartum risk class"
+    )
+    probability_high_risk: float = Field(..., ge=0.0, le=1.0)
+    probability_low_risk: float = Field(..., ge=0.0, le=1.0)
+    risk_level: Literal["Low Risk", "High Risk"] = Field(
+        ..., description="Postpartum risk label"
+    )
+    decision_threshold: float = Field(..., ge=0.0, le=1.0)
+    emergency_threshold: float = Field(..., ge=0.0, le=1.0)
+    advise_hospital_visit: bool
+    advise_emergency_care: bool
+    hospital_advice: str
+    emergency_advice: str
+    top_risk_factors: Dict[str, float] = Field(
+        ..., description="Top contributing input factors"
+    )
+    imputed_fields: List[str] = Field(
+        ..., description="Fields not provided and imputed by model preprocessing"
+    )
+    model_version: str = Field(..., description="Model artifact version")
+
+
 class PregnancyAssessmentRecordResponse(BaseModel):
     """Stored pregnancy assessment record tied to an authenticated user."""
 

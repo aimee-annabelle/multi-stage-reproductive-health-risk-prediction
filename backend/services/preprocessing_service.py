@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 
-from backend.models.request import InfertilityRequest, PregnancyRequest
+from backend.models.request import InfertilityRequest, PostpartumRequest, PregnancyRequest
 
 
 @dataclass
@@ -21,6 +21,13 @@ class PreparedV2Inputs:
 class PreparedPregnancyInputs:
     payload: Dict[str, Any]
     pregnancy_df: pd.DataFrame
+    imputed_fields: List[str]
+
+
+@dataclass
+class PreparedPostpartumInputs:
+    payload: Dict[str, Any]
+    postpartum_df: pd.DataFrame
     imputed_fields: List[str]
 
 
@@ -41,6 +48,27 @@ PREGNANCY_BINARY_FIELDS = {
     "preexisting_diabetes",
     "gestational_diabetes",
     "mental_health",
+}
+
+POSTPARTUM_BINARY_FIELDS = {
+    "smoke_cigarettes",
+    "smoke_shisha",
+    "premature_labour",
+    "healthy_baby",
+    "baby_admitted_nicu",
+    "baby_feeding_difficulties",
+    "pregnancy_problem",
+    "postnatal_problems",
+    "natal_problems",
+    "problems_with_husband",
+    "financial_problems",
+    "family_problems",
+    "had_covid_19",
+    "had_covid_19_vaccine",
+    "access_to_healthcare_services",
+    "aware_of_ppd_symptoms",
+    "experienced_cultural_stigma_ppd",
+    "received_support_or_treatment_ppd",
 }
 
 
@@ -147,4 +175,104 @@ def prepare_pregnancy_inputs(
         payload=payload,
         pregnancy_df=pregnancy_df,
         imputed_fields=imputed_fields,
+    )
+
+
+def _normalize_yes_no(value: Any) -> Any:
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return np.nan
+
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+
+    if isinstance(value, (int, float)):
+        return "Yes" if int(value) == 1 else "No"
+
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "yes", "y", "true"}:
+            return "Yes"
+        if lowered in {"0", "no", "n", "false"}:
+            return "No"
+        return value.strip()
+
+    return value
+
+
+def _normalize_postpartum_payload(request: PostpartumRequest) -> Dict[str, Any]:
+    payload = request.model_dump()
+    for field in POSTPARTUM_BINARY_FIELDS:
+        payload[field] = _normalize_yes_no(payload.get(field))
+    return payload
+
+
+def prepare_postpartum_inputs(
+    request: PostpartumRequest,
+    feature_schema: Dict[str, List[str]],
+) -> PreparedPostpartumInputs:
+    payload = _normalize_postpartum_payload(request)
+
+    # Keep compatibility with the current trained schema (which contains source typos)
+    # while also supporting corrected spellings for future retrains.
+    feature_map: Dict[str, List[str]] = {
+        "age_group": ["Age (y)"],
+        "baby_age_months": ["Baby age in months"],
+        "marital_status": ["Marital status"],
+        "household_income": ["What is the household income"],
+        "level_of_education": ["Level of education"],
+        "residency": ["Residency"],
+        "comorbidities": ["comorbidities"],
+        "smoke_cigarettes": ["Smoke cigarettes", "Smoke cigarattes"],
+        "smoke_shisha": ["Smoke Shish"],
+        "kgs_gained_during_pregnancy": ["Kgs gained during pregnancy"],
+        "premature_labour": ["Premature labour"],
+        "healthy_baby": ["Healthy baby", "Healty baby"],
+        "baby_admitted_nicu": ["Baby admitted in the NICU"],
+        "baby_feeding_difficulties": ["Baby had feeding difficulties", "Baby had feeding difficluties"],
+        "pregnancy_problem": ["Pregnancy problem?"],
+        "postnatal_problems": ["Postnatal problems?"],
+        "natal_problems": ["Natal problems?"],
+        "problems_with_husband": ["problems with husband?"],
+        "financial_problems": ["financial problems?"],
+        "family_problems": ["family problems?"],
+        "had_covid_19": ["got COVID-19?"],
+        "had_covid_19_vaccine": ["got COVID-19 vaccine?"],
+        "access_to_healthcare_services": ["Do you have access to healthcare services"],
+        "aware_of_ppd_symptoms": ["Are you aware of the symptoms and risk factors associated with postpartum depression"],
+        "experienced_cultural_stigma_ppd": [
+            "Have you experienced any cultural stigma or judgment surrounding postpartum depression within your community"
+        ],
+        "received_support_or_treatment_ppd": ["Have you received any support or treatment for postpartum depression"],
+        "epds_laugh_and_funny_side": ["I have been able to laugh and see the funny side of things"],
+        "epds_looked_forward_enjoyment": ["I have looked forward with enjoyment to things"],
+        "epds_blamed_myself": ["I have blamed myself unnecessarily when things went wrong"],
+        "epds_anxious_or_worried": ["I have been anxious or worried for no good reason"],
+        "epds_scared_or_panicky": ["I have felt scared or panicky for no very good reason"],
+        "epds_things_getting_on_top": ["Things have been getting on top of me"],
+        "epds_unhappy_difficulty_sleeping": ["I have been so unhappy that I have had difficulty sleeping"],
+        "epds_sad_or_miserable": ["I have felt sad or miserable"],
+        "epds_unhappy_crying": ["I have been so unhappy that I have been crying"],
+        "epds_thought_of_harming_self": ["Thought of harming myself has occurred to me"],
+    }
+
+    all_features = feature_schema["all_features"]
+    row: Dict[str, Any] = {feature: np.nan for feature in all_features}
+
+    imputed_fields: List[str] = []
+    for api_name, candidates in feature_map.items():
+        model_name = next((c for c in candidates if c in row), None)
+        if model_name is None:
+            continue
+        value = payload.get(api_name)
+        if value is None:
+            imputed_fields.append(api_name)
+            continue
+        row[model_name] = value
+
+    postpartum_df = pd.DataFrame([row], columns=all_features)
+
+    return PreparedPostpartumInputs(
+        payload=payload,
+        postpartum_df=postpartum_df,
+        imputed_fields=sorted(set(imputed_fields)),
     )

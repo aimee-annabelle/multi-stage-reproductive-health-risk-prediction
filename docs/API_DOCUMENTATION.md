@@ -8,6 +8,7 @@ The API currently provides:
 
 - Stage 1 infertility risk prediction
 - Stage 2 pregnancy risk prediction
+- Stage 3 postpartum risk prediction
 - Authentication
 - User-linked pregnancy follow-up tracking and trend comparison
 
@@ -32,6 +33,7 @@ Header format:
 - `GET /health` - service status
 - `GET /model/info` - infertility model metadata
 - `GET /model/info/pregnancy` - pregnancy model metadata
+- `GET /model/info/postpartum` - postpartum model metadata
 
 ## Prediction Endpoints
 
@@ -97,6 +99,65 @@ Header format:
 #### Response keys
 
 - `predicted_class` (`low_pregnancy_risk` | `high_pregnancy_risk`)
+- `probability_high_risk`
+- `probability_low_risk`
+- `risk_level` (`Low Risk` | `High Risk`)
+- `decision_threshold`
+- `emergency_threshold`
+- `advise_hospital_visit`
+- `advise_emergency_care`
+- `hospital_advice`
+- `emergency_advice`
+- `top_risk_factors`
+- `imputed_fields`
+- `model_version`
+
+### 3) `POST /predict/postpartum`
+
+#### Optional fields
+
+- `age_group`
+- `baby_age_months` (0-24)
+- `kgs_gained_during_pregnancy` (0-50)
+- `marital_status`
+- `household_income`
+- `level_of_education`
+- `residency`
+- `comorbidities`
+- `smoke_cigarettes` (supports `0/1`, `true/false`, `yes/no`)
+- `smoke_shisha` (supports `0/1`, `true/false`, `yes/no`)
+- `premature_labour` (supports `0/1`, `true/false`, `yes/no`)
+- `healthy_baby` (supports `0/1`, `true/false`, `yes/no`)
+- `baby_admitted_nicu` (supports `0/1`, `true/false`, `yes/no`)
+- `baby_feeding_difficulties` (supports `0/1`, `true/false`, `yes/no`)
+- `pregnancy_problem` (supports `0/1`, `true/false`, `yes/no`)
+- `postnatal_problems` (supports `0/1`, `true/false`, `yes/no`)
+- `natal_problems` (supports `0/1`, `true/false`, `yes/no`)
+- `problems_with_husband` (supports `0/1`, `true/false`, `yes/no`)
+- `financial_problems` (supports `0/1`, `true/false`, `yes/no`)
+- `family_problems` (supports `0/1`, `true/false`, `yes/no`)
+- `had_covid_19` (supports `0/1`, `true/false`, `yes/no`)
+- `had_covid_19_vaccine` (supports `0/1`, `true/false`, `yes/no`)
+- `access_to_healthcare_services` (supports `0/1`, `true/false`, `yes/no`)
+- `aware_of_ppd_symptoms` (supports `0/1`, `true/false`, `yes/no`)
+- `experienced_cultural_stigma_ppd` (supports `0/1`, `true/false`, `yes/no`)
+- `received_support_or_treatment_ppd` (supports `0/1`, `true/false`, `yes/no`)
+- `epds_laugh_and_funny_side`
+- `epds_looked_forward_enjoyment`
+- `epds_blamed_myself`
+- `epds_anxious_or_worried`
+- `epds_scared_or_panicky`
+- `epds_things_getting_on_top`
+- `epds_unhappy_difficulty_sleeping`
+- `epds_sad_or_miserable`
+- `epds_unhappy_crying`
+- `epds_thought_of_harming_self`
+
+At least one field must be provided.
+
+#### Response keys
+
+- `predicted_class` (`low_postpartum_risk` | `high_postpartum_risk`)
 - `probability_high_risk`
 - `probability_low_risk`
 - `risk_level` (`Low Risk` | `High Risk`)
@@ -213,6 +274,21 @@ curl -X POST "http://localhost:8000/predict/pregnancy" \
     "gestational_diabetes": 0,
     "mental_health": 1,
     "heart_rate": 86
+  }'
+```
+
+### Postpartum prediction
+
+```bash
+curl -X POST "http://localhost:8000/predict/postpartum" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "baby_age_months": 3,
+    "smoke_cigarettes": 0,
+    "postnatal_problems": 1,
+    "epds_anxious_or_worried": "Yes, very often",
+    "epds_sad_or_miserable": "Yes, quite often",
+    "epds_thought_of_harming_self": "Sometimes"
   }'
 ```
 

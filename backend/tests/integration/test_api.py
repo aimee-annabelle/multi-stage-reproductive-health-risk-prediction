@@ -192,3 +192,42 @@ def test_model_info_pregnancy_success(client) -> None:
     assert "evaluation_metrics" in body
     assert "threshold" in body
     assert "emergency_threshold" in body
+
+
+def test_predict_postpartum_success(client) -> None:
+    payload = {
+        "baby_age_months": 3,
+        "smoke_cigarettes": 0,
+        "smoke_shisha": 0,
+        "postnatal_problems": 1,
+        "epds_anxious_or_worried": "Yes, very often",
+        "epds_sad_or_miserable": "Yes, quite often",
+        "epds_thought_of_harming_self": "Sometimes",
+    }
+
+    response = client.post("/predict/postpartum", json=payload)
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["predicted_class"] in {"low_postpartum_risk", "high_postpartum_risk"}
+    assert 0.0 <= body["probability_high_risk"] <= 1.0
+    assert 0.0 <= body["probability_low_risk"] <= 1.0
+    assert abs((body["probability_high_risk"] + body["probability_low_risk"]) - 1.0) < 1e-6
+    assert 0.0 <= body["decision_threshold"] <= 1.0
+    assert 0.0 <= body["emergency_threshold"] <= 1.0
+    assert body["emergency_threshold"] >= body["decision_threshold"]
+    assert isinstance(body["imputed_fields"], list)
+
+
+def test_predict_postpartum_missing_signal_returns_422(client) -> None:
+    response = client.post("/predict/postpartum", json={})
+    assert response.status_code == 422
+
+
+def test_model_info_postpartum_success(client) -> None:
+    response = client.get("/model/info/postpartum")
+    assert response.status_code == 200
+    body = response.json()
+    assert "model_version" in body
+    assert "selected_model_name" in body
+    assert "decision_threshold" in body
