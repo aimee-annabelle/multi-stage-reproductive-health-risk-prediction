@@ -39,20 +39,30 @@ npm run preview
 frontend/src/
 ├── App.tsx
 ├── main.tsx
+├── components/dashboard/
+│   ├── DashboardLayout.tsx
+│   ├── DashboardRightRail.tsx
+│   └── DashboardSidebar.tsx
 ├── pages/
 │   ├── LandingPage.tsx
 │   ├── SignInPage.tsx
 │   ├── SignUpPage.tsx
-│   └── DashboardPage.tsx
+│   └── dashboard/
+│       ├── DashboardOverviewPage.tsx
+│       ├── InfertilityDashboardPage.tsx
+│       ├── PregnancyDashboardPage.tsx
+│       └── PostpartumDashboardPage.tsx
 ├── services/
 │   ├── authApi.ts
-│   └── infertilityApi.ts
+│   ├── apiClient.ts
+│   ├── predictionApi.ts
+│   └── pregnancyFollowUpApi.ts
 ├── stores/
-│   ├── authStore.ts
-│   └── dashboardStore.ts
+│   └── authStore.ts
+├── utils/
+│   └── dashboardSnapshot.ts
 ├── styles/
 │   ├── auth.css
-│   ├── dashboard.css
 │   └── landing.css
 └── assets/
 ```
@@ -62,7 +72,10 @@ frontend/src/
 - `/` landing page
 - `/sign-in` sign-in page
 - `/sign-up` sign-up page
-- `/dashboard` protected route (requires auth state)
+- `/dashboard` protected overview route
+- `/dashboard/infertility` protected infertility assessment
+- `/dashboard/pregnancy` protected pregnancy follow-up assessment
+- `/dashboard/postpartum` protected postpartum assessment
 
 ## Backend Integration
 

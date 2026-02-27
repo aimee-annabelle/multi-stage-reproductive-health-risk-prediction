@@ -21,6 +21,10 @@ from backend.models.request import (
 )
 from backend.models.response import (
     InfertilityResponse,
+    PostpartumAssessmentHistoryResponse,
+    PostpartumAssessmentRecordResponse,
+    PostpartumTimelinePointResponse,
+    PostpartumTimelineSummaryResponse,
     PostpartumResponse,
     PregnancyAssessmentComparisonResponse,
     PregnancyAssessmentHistoryResponse,
@@ -29,7 +33,7 @@ from backend.models.response import (
     PregnancyTimelineSummaryResponse,
     PregnancyResponse,
 )
-from backend.db.models import AuthSession, PregnancyAssessment, User
+from backend.db.models import AuthSession, PostpartumAssessment, PregnancyAssessment, User
 from backend.db.session import engine, get_db_session
 from backend.services.model_service import (
     get_model_info,
@@ -50,6 +54,12 @@ from backend.services.pregnancy_tracking_service import (
     count_pregnancy_assessments,
     create_pregnancy_assessment,
     list_pregnancy_assessments,
+)
+from backend.services.postpartum_tracking_service import (
+    build_postpartum_timeline_summary,
+    count_postpartum_assessments,
+    create_postpartum_assessment,
+    list_postpartum_assessments,
 )
 
 logger = logging.getLogger(__name__)
@@ -234,6 +244,52 @@ def pregnancy_assessment_to_response(
     )
 
 
+def postpartum_input_completion_pct(payload: dict) -> float:
+    if not payload:
+        return 0.0
+    total_fields = len(PostpartumRequest.model_fields)
+    if total_fields <= 0:
+        return 0.0
+    return round((len(payload) / total_fields) * 100.0, 6)
+
+
+def postpartum_assessment_to_response(
+    assessment: PostpartumAssessment,
+) -> PostpartumAssessmentRecordResponse:
+    created_at = (
+        assessment.created_at.isoformat()
+        if hasattr(assessment.created_at, "isoformat")
+        else str(assessment.created_at)
+    )
+    payload = assessment.input_payload or {}
+
+    return PostpartumAssessmentRecordResponse(
+        assessment_id=assessment.id,
+        created_at=created_at,
+        input_payload=payload,
+        age_group=assessment.age_group,
+        baby_age_months=assessment.baby_age_months,
+        kgs_gained_during_pregnancy=assessment.kgs_gained_during_pregnancy,
+        postnatal_problems=assessment.postnatal_problems,
+        baby_feeding_difficulties=assessment.baby_feeding_difficulties,
+        financial_problems=assessment.financial_problems,
+        predicted_class=assessment.predicted_class,
+        probability_high_risk=assessment.probability_high_risk,
+        probability_low_risk=assessment.probability_low_risk,
+        risk_level=assessment.risk_level,
+        decision_threshold=assessment.decision_threshold,
+        emergency_threshold=assessment.emergency_threshold,
+        advise_hospital_visit=assessment.advise_hospital_visit,
+        advise_emergency_care=assessment.advise_emergency_care,
+        hospital_advice=assessment.hospital_advice,
+        emergency_advice=assessment.emergency_advice,
+        top_risk_factors=assessment.top_risk_factors or {},
+        imputed_fields=assessment.imputed_fields or [],
+        model_version=assessment.model_version,
+        input_completion_pct=postpartum_input_completion_pct(payload),
+    )
+
+
 @app.get("/")
 async def root() -> dict:
     return {
@@ -247,6 +303,9 @@ async def root() -> dict:
             "pregnancy_followup_history": "/pregnancy/follow-up/history",
             "pregnancy_followup_compare_latest": "/pregnancy/follow-up/compare/latest",
             "pregnancy_followup_timeline_summary": "/pregnancy/follow-up/timeline/summary",
+            "postpartum_followup_assess": "/postpartum/follow-up/assess",
+            "postpartum_followup_history": "/postpartum/follow-up/history",
+            "postpartum_followup_timeline_summary": "/postpartum/follow-up/timeline/summary",
             "health": "/health",
             "model_info": "/model/info",
             "model_info_infertility": "/model/info",
@@ -416,6 +475,98 @@ async def predict_postpartum_route(payload: PostpartumRequest):
     except Exception as exc:
         logger.exception("Postpartum prediction error")
         raise HTTPException(status_code=500, detail="Postpartum prediction error") from exc
+
+
+@app.post(
+    "/postpartum/follow-up/assess",
+    response_model=PostpartumAssessmentRecordResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def assess_and_store_postpartum_followup(
+    payload: PostpartumRequest,
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    try:
+        prediction = predict_postpartum(payload)
+        assessment = create_postpartum_assessment(
+            db=db,
+            user_id=current_user.id,
+            payload=payload,
+            prediction=prediction,
+        )
+        return postpartum_assessment_to_response(assessment)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Postpartum follow-up storage error")
+        raise HTTPException(status_code=500, detail="Postpartum follow-up storage error") from exc
+
+
+@app.get(
+    "/postpartum/follow-up/history",
+    response_model=PostpartumAssessmentHistoryResponse,
+)
+async def get_postpartum_followup_history(
+    limit: int = Query(default=20, ge=1, le=200),
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    assessments = list_postpartum_assessments(db=db, user_id=current_user.id, limit=limit)
+    total = count_postpartum_assessments(db=db, user_id=current_user.id)
+    return PostpartumAssessmentHistoryResponse(
+        total_records=total,
+        assessments=[postpartum_assessment_to_response(item) for item in assessments],
+    )
+
+
+@app.get(
+    "/postpartum/follow-up/timeline/summary",
+    response_model=PostpartumTimelineSummaryResponse,
+)
+async def get_postpartum_followup_timeline_summary(
+    limit: int = Query(default=50, ge=1, le=500),
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    summary = build_postpartum_timeline_summary(db=db, user_id=current_user.id, limit=limit)
+    points = [
+        PostpartumTimelinePointResponse(
+            assessment_id=item.id,
+            created_at=item.created_at.isoformat(),
+            probability_high_risk=item.probability_high_risk,
+            probability_low_risk=item.probability_low_risk,
+            risk_level=item.risk_level,
+            advise_hospital_visit=item.advise_hospital_visit,
+            advise_emergency_care=item.advise_emergency_care,
+            baby_age_months=item.baby_age_months,
+            postnatal_problems=item.postnatal_problems,
+            baby_feeding_difficulties=item.baby_feeding_difficulties,
+            financial_problems=item.financial_problems,
+            input_completion_pct=postpartum_input_completion_pct(item.input_payload or {}),
+        )
+        for item in summary["points"]
+    ]
+
+    return PostpartumTimelineSummaryResponse(
+        total_records=summary["total_records"],
+        time_span_days=summary["time_span_days"],
+        high_risk_count=summary["high_risk_count"],
+        hospital_referral_count=summary["hospital_referral_count"],
+        emergency_referral_count=summary["emergency_referral_count"],
+        high_risk_percentage=summary["high_risk_percentage"],
+        hospital_referral_percentage=summary["hospital_referral_percentage"],
+        emergency_referral_percentage=summary["emergency_referral_percentage"],
+        average_input_completion=summary["average_input_completion"],
+        latest_input_completion=summary["latest_input_completion"],
+        earliest_probability_high_risk=summary["earliest_probability_high_risk"],
+        latest_probability_high_risk=summary["latest_probability_high_risk"],
+        probability_high_risk_change=summary["probability_high_risk_change"],
+        trend=summary["trend"],
+        points=points,
+    )
 
 
 @app.post(

@@ -1,7 +1,7 @@
 from sqlalchemy import delete
 
 from backend.db.base import Base
-from backend.db.models import AuthSession, PregnancyAssessment, User
+from backend.db.models import AuthSession, PostpartumAssessment, PregnancyAssessment, User
 from backend.db.session import SessionLocal, engine
 from fastapi.testclient import TestClient
 
@@ -14,6 +14,7 @@ client = TestClient(app)
 def _cleanup_auth_db() -> None:
     db = SessionLocal()
     try:
+        db.execute(delete(PostpartumAssessment))
         db.execute(delete(PregnancyAssessment))
         db.execute(delete(AuthSession))
         db.execute(delete(User))
@@ -175,3 +176,65 @@ def test_pregnancy_followup_storage_history_and_comparison() -> None:
     assert len(timeline["points"]) >= 2
     assert timeline["points"][0]["assessment_id"] == body_1["assessment_id"]
     assert timeline["points"][-1]["assessment_id"] == body_2["assessment_id"]
+
+
+def test_postpartum_followup_storage_history_and_timeline() -> None:
+    signup_res = client.post(
+        "/auth/signup",
+        json={
+            "full_name": "Postpartum User",
+            "email": "postpartum.user@example.com",
+            "password": "StrongPass123",
+        },
+    )
+    assert signup_res.status_code == 201
+    token = signup_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    payload_1 = {
+        "baby_age_months": 2,
+        "postnatal_problems": "yes",
+        "baby_feeding_difficulties": "yes",
+        "financial_problems": "no",
+        "epds_anxious_or_worried": "Yes, very often",
+        "epds_sad_or_miserable": "Yes, quite often",
+        "epds_thought_of_harming_self": "Sometimes",
+    }
+    create_1 = client.post("/postpartum/follow-up/assess", json=payload_1, headers=headers)
+    assert create_1.status_code == 201
+    body_1 = create_1.json()
+    assert body_1["assessment_id"] > 0
+    assert body_1["input_payload"]["baby_age_months"] == 2
+
+    payload_2 = {
+        "baby_age_months": 4,
+        "postnatal_problems": "no",
+        "baby_feeding_difficulties": "no",
+        "financial_problems": "yes",
+        "epds_anxious_or_worried": "Hardly ever",
+        "epds_sad_or_miserable": "Not very often",
+        "epds_thought_of_harming_self": "Never",
+    }
+    create_2 = client.post("/postpartum/follow-up/assess", json=payload_2, headers=headers)
+    assert create_2.status_code == 201
+    body_2 = create_2.json()
+    assert body_2["assessment_id"] > body_1["assessment_id"]
+
+    history_res = client.get("/postpartum/follow-up/history?limit=10", headers=headers)
+    assert history_res.status_code == 200
+    history = history_res.json()
+    assert history["total_records"] >= 2
+    assert len(history["assessments"]) >= 2
+    assert history["assessments"][0]["assessment_id"] == body_2["assessment_id"]
+    assert "input_completion_pct" in history["assessments"][0]
+
+    timeline_res = client.get("/postpartum/follow-up/timeline/summary?limit=10", headers=headers)
+    assert timeline_res.status_code == 200
+    timeline = timeline_res.json()
+    assert timeline["total_records"] >= 2
+    assert timeline["trend"] in {"increased", "decreased", "stable"}
+    assert timeline["latest_probability_high_risk"] is not None
+    assert timeline["earliest_probability_high_risk"] is not None
+    assert len(timeline["points"]) >= 2
+    assert "high_risk_percentage" in timeline
+    assert "average_input_completion" in timeline

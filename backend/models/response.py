@@ -94,6 +94,88 @@ class PostpartumResponse(BaseModel):
     model_version: str = Field(..., description="Model artifact version")
 
 
+class PostpartumAssessmentRecordResponse(BaseModel):
+    """Stored postpartum assessment record tied to an authenticated user."""
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    assessment_id: int
+    created_at: str
+    input_payload: Dict[str, object]
+
+    age_group: str | None
+    baby_age_months: float | None
+    kgs_gained_during_pregnancy: float | None
+    postnatal_problems: int | None
+    baby_feeding_difficulties: int | None
+    financial_problems: int | None
+
+    predicted_class: Literal["low_postpartum_risk", "high_postpartum_risk"]
+    probability_high_risk: float = Field(..., ge=0.0, le=1.0)
+    probability_low_risk: float = Field(..., ge=0.0, le=1.0)
+    risk_level: Literal["Low Risk", "High Risk"]
+    decision_threshold: float = Field(..., ge=0.0, le=1.0)
+    emergency_threshold: float = Field(..., ge=0.0, le=1.0)
+    advise_hospital_visit: bool
+    advise_emergency_care: bool
+    hospital_advice: str
+    emergency_advice: str
+    top_risk_factors: Dict[str, float]
+    imputed_fields: List[str]
+    model_version: str
+    input_completion_pct: float = Field(..., ge=0.0, le=100.0)
+
+
+class PostpartumAssessmentHistoryResponse(BaseModel):
+    """Paginated postpartum follow-up history for a user."""
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    total_records: int
+    assessments: List[PostpartumAssessmentRecordResponse]
+
+
+class PostpartumTimelinePointResponse(BaseModel):
+    """Single chronological point for postpartum follow-up timeline visualizations."""
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    assessment_id: int
+    created_at: str
+    probability_high_risk: float = Field(..., ge=0.0, le=1.0)
+    probability_low_risk: float = Field(..., ge=0.0, le=1.0)
+    risk_level: Literal["Low Risk", "High Risk"]
+    advise_hospital_visit: bool
+    advise_emergency_care: bool
+    baby_age_months: float | None
+    postnatal_problems: int | None
+    baby_feeding_difficulties: int | None
+    financial_problems: int | None
+    input_completion_pct: float = Field(..., ge=0.0, le=100.0)
+
+
+class PostpartumTimelineSummaryResponse(BaseModel):
+    """Aggregated timeline summary for postpartum follow-up tracking."""
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    total_records: int
+    time_span_days: float | None
+    high_risk_count: int
+    hospital_referral_count: int
+    emergency_referral_count: int
+    high_risk_percentage: float = Field(..., ge=0.0, le=100.0)
+    hospital_referral_percentage: float = Field(..., ge=0.0, le=100.0)
+    emergency_referral_percentage: float = Field(..., ge=0.0, le=100.0)
+    average_input_completion: float = Field(..., ge=0.0, le=100.0)
+    latest_input_completion: float | None = Field(default=None, ge=0.0, le=100.0)
+    earliest_probability_high_risk: float | None = Field(default=None, ge=0.0, le=1.0)
+    latest_probability_high_risk: float | None = Field(default=None, ge=0.0, le=1.0)
+    probability_high_risk_change: float | None
+    trend: Literal["increased", "decreased", "stable"] | None
+    points: List[PostpartumTimelinePointResponse]
+
+
 class PregnancyAssessmentRecordResponse(BaseModel):
     """Stored pregnancy assessment record tied to an authenticated user."""
 
