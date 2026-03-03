@@ -1,91 +1,112 @@
-# Backend - Reproductive Health Risk Prediction API
+# Backend - EveBloom ML Inference and Tracking API
 
-FastAPI backend for infertility, pregnancy, and postpartum risk prediction, plus authenticated maternal follow-up tracking.
+This backend is the operational ML serving layer for EveBloom. It exposes model inference endpoints, authentication/session management, and follow-up storage endpoints used by longitudinal dashboards.
 
-## Current Backend Layout
+## Backend Role in the ML System
+
+The backend is where trained artifacts become usable clinical-screening services.
+
+- Loads persisted model artifacts from `ml/` during startup
+- Validates and preprocesses incoming payloads
+- Runs stage-specific prediction logic
+- Returns risk probabilities, classes, and explanatory factors
+- Stores follow-up assessments for trend analysis over time
+
+## Tech Stack
+- FastAPI
+- SQLAlchemy
+- Alembic
+- PostgreSQL
+- scikit-learn artifact loading/inference
+
+## Code Structure
 
 ```text
 backend/
 ├── alembic/
 │   └── versions/
-├── api/
-│   └── routes/                 # legacy/experimental route modules
 ├── db/
-│   ├── base.py
 │   ├── models.py
 │   └── session.py
 ├── models/
 │   ├── request.py
 │   └── response.py
 ├── services/
-│   ├── model_service.py
-│   ├── prediction_service.py
+│   ├── model_service.py             # artifact loading + metadata
+│   ├── prediction_service.py        # core inference functions
 │   ├── pregnancy_tracking_service.py
-│   └── preprocessing_service.py
+│   └── postpartum_tracking_service.py
 ├── tests/
 │   ├── integration/
-│   ├── unit/
-│   └── conftest.py
-├── main.py                     # active route registration and app startup
-├── alembic.ini
+│   └── unit/
+├── main.py                          # route registration + startup lifecycle
 └── .env.example
 ```
 
-## Setup
+## Local Run
+
+From repository root:
 
 ```bash
-# from repository root
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 cp backend/.env.example backend/.env
-```
-
-Set database config in `backend/.env`:
-
-- `DATABASE_URL` (recommended), or
-- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`
-
-Apply migrations:
-
-```bash
 alembic -c backend/alembic.ini upgrade head
-```
-
-Run API:
-
-```bash
 python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## Active Endpoints
+API docs:
+- `http://localhost:8000/docs`
+- `http://localhost:8000/redoc`
 
-- `GET /`
-- `GET /health`
+## Environment Configuration
+
+Use `DATABASE_URL` for deployed/runtime environments.
+
+Fallback database variables:
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_SSLMODE`
+
+Other important settings:
+- `CORS_ORIGINS`
+- `HOST`
+- `PORT`
+
+## Endpoint Groups
+
+### Authentication
 - `POST /auth/signup`
 - `POST /auth/login`
 - `GET /auth/me`
 - `POST /auth/logout`
-- `GET /model/info`
-- `GET /model/info/pregnancy`
-- `GET /model/info/postpartum`
+
+### Inference APIs
 - `POST /predict/infertility`
 - `POST /predict/pregnancy`
 - `POST /predict/postpartum`
-- `POST /pregnancy/follow-up/assess`
-- `GET /pregnancy/follow-up/history`
-- `GET /pregnancy/follow-up/compare/latest`
-- `GET /pregnancy/follow-up/timeline/summary`
 
-## Database
+### Model Metadata
+- `GET /model/info`
+- `GET /model/info/pregnancy`
+- `GET /model/info/postpartum`
 
-PostgreSQL is used for:
+### Follow-Up Tracking
+- Pregnancy:
+  - `POST /pregnancy/follow-up/assess`
+  - `GET /pregnancy/follow-up/history`
+  - `GET /pregnancy/follow-up/compare/latest`
+  - `GET /pregnancy/follow-up/timeline/summary`
+- Postpartum:
+  - `POST /postpartum/follow-up/assess`
+  - `GET /postpartum/follow-up/history`
+  - `GET /postpartum/follow-up/timeline/summary`
 
-- `users`
-- `sessions`
-- `pregnancy_assessments`
-
-Migrations:
+## Migrations
 
 ```bash
 alembic -c backend/alembic.ini upgrade head
@@ -95,7 +116,7 @@ alembic -c backend/alembic.ini downgrade -1
 
 ## Testing
 
-Integration tests are PostgreSQL-only.
+Integration tests require PostgreSQL.
 
 ```bash
 export DATABASE_URL="postgresql+psycopg2://postgres:<password>@localhost:5432/reproductive_health_test"
@@ -104,8 +125,11 @@ pytest
 pytest --cov=backend
 ```
 
-## API Docs
+## Docker
 
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-- Detailed endpoint docs: `docs/API_DOCUMENTATION.md`
+- Backend image definition: `backend/Dockerfile`
+- Full stack runtime: root `docker-compose.yml`
+
+```bash
+docker compose up --build
+```

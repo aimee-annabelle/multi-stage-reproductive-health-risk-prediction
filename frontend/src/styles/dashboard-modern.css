@@ -1,9 +1,54 @@
 .dashboard-root {
-  --dashboard-main-border: #fff5f7;
+  --dashboard-main-border: var(--color-primary-light);
+  --color-off-white: var(--color-white);
+  --color-light-gray: var(--color-white);
+  --dashboard-card-bg: var(--auth-bg-right);
   min-height: 100vh;
   width: 100%;
-  background: var(--color-off-white);
+  background: var(--color-white);
   color: var(--color-gray-700);
+}
+
+.dashboard-rail-card,
+.sidebar-user-card,
+.overview-header-metrics,
+.overview-stage-card,
+.overview-rail-card,
+.overview-followup-inner,
+.dashboard-warning-bar,
+.preg-monitor-status-card,
+.preg-monitor-history-card,
+.preg-monitor-flags-card,
+.preg-checkin-card,
+.preg-monitor-alert-card,
+.preg-monitor-side-stats,
+.preg-monitor-factor-item,
+.preg-monitor-gap-card,
+.preg-form,
+.preg-result-panel,
+.preg-summary-card,
+.preg-timeline-card,
+.preg-rail-item,
+.inf-card,
+.inf-info-card,
+.inf-action-card,
+.inf-summary-card,
+.inf-factor-card,
+.inf-insight-card,
+.ppd-empty-card,
+.ppd-guide-card,
+.ppd-card,
+.ppd-nav-disclaimer,
+.ppd-trend-card,
+.ppd-recovery-card,
+.ppd-referral-card,
+.ppd-essentials-card,
+.ppd-factors-card,
+.ppd-guidance-card,
+.ppd-class-card,
+.ppd-side-card,
+.ppd-quick-card {
+  background: var(--dashboard-card-bg);
 }
 
 .dashboard-shell-grid {
@@ -215,12 +260,7 @@
 .sidebar-brand-icon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-white);
-  overflow: hidden;
+  display: inline-block;
 }
 
 .sidebar-brand-logo {
@@ -314,18 +354,12 @@
 .sidebar-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-white);
-  border: 1px solid var(--color-primary-light);
-  overflow: hidden;
+  display: inline-block;
 }
 
 .sidebar-avatar-logo {
-  width: 86%;
-  height: 86%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -938,8 +972,8 @@
 }
 
 .preg-monitor-page {
-  --color-primary-pale: #fce7f3;
-  --color-primary-light: #fff5f7;
+  --color-primary-pale: var(--bg-soft);
+  --color-primary-light: var(--line);
   display: grid;
   gap: 1.4rem;
   border: none;
@@ -1015,7 +1049,7 @@
   border-radius: 12px;
   border: 1px solid transparent;
   color: var(--color-gray-700);
-  background: var(--color-primary-light);
+  background: var(--auth-bg-right);
   font-size: 0.95rem;
   font-weight: 700;
   padding: 0.56rem 1.15rem;
@@ -1024,8 +1058,9 @@
 
 .preg-monitor-week-chip.is-future {
   background: transparent;
+  border-width: 1.5px;
   border-style: dashed;
-  border-color: var(--color-primary-light);
+  border-color: var(--pink-500);
   color: var(--color-gray-500);
 }
 
@@ -1176,7 +1211,7 @@
 .preg-monitor-risk-row {
   border-radius: 14px;
   border: none;
-  background: #fff5f7;
+  background: var(--auth-bg-right);
   padding: 0.84rem 0.94rem;
   box-shadow: 0 4px 10px rgba(17, 31, 34, 0.05);
 }
@@ -1390,22 +1425,22 @@
 
 .preg-monitor-flag-item {
   border-radius: 13px;
-  border: none;
-  background: #fff5f7;
+  border: 1px solid var(--auth-bg-right);
+  background: var(--auth-bg-right);
   padding: 0.85rem;
   box-shadow: 0 4px 10px rgba(17, 31, 34, 0.05);
 }
 
 .preg-monitor-flag-item.tone-ok {
-  background: #fff5f7;
+  background: var(--auth-bg-right);
 }
 
 .preg-monitor-flag-item.tone-warn {
-  background: #fff5f7;
+  background: var(--auth-bg-right);
 }
 
 .preg-monitor-flag-item.tone-neutral {
-  background: #fff5f7;
+  background: var(--auth-bg-right);
 }
 
 .preg-monitor-flag-title {
@@ -2052,7 +2087,7 @@
   width: 100%;
   height: 8px;
   border-radius: 999px;
-  background: #fff5f7;
+  background: var(--color-primary-light);
   overflow: hidden;
   margin-bottom: 0.9rem;
 }
@@ -2066,7 +2101,7 @@
 
 .inf-card {
   border-radius: 14px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-white);
   padding: 1.2rem;
 }
@@ -2096,7 +2131,7 @@
 
 .inf-section {
   border-radius: 12px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-off-white);
   padding: 0.9rem;
 }
@@ -2134,7 +2169,7 @@
 .inf-input {
   width: 100%;
   border-radius: 10px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-white);
   color: var(--color-gray-800);
   padding: 0.58rem 0.72rem;
@@ -2154,7 +2189,7 @@
 }
 
 .inf-chip {
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-white);
   color: var(--color-gray-600);
   border-radius: 999px;
@@ -2172,7 +2207,7 @@
 
 .inf-toggle-list {
   margin-top: 0.75rem;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   border-radius: 10px;
   overflow: hidden;
   background: var(--color-white);
@@ -2183,7 +2218,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px solid #fff5f7;
+  border-bottom: 1px solid var(--color-primary-light);
   padding: 0.65rem 0.8rem;
 }
 
@@ -2213,7 +2248,7 @@
 .inf-note-box {
   margin: 0;
   border-radius: 10px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-white);
   color: var(--color-gray-600);
   padding: 0.78rem;
@@ -2233,7 +2268,7 @@
 .inf-action-row {
   margin-top: 1rem;
   padding-top: 0.9rem;
-  border-top: 1px solid #fff5f7;
+  border-top: 1px solid var(--color-primary-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2272,7 +2307,7 @@
 }
 
 .inf-btn-ghost {
-  border-color: #fff5f7;
+  border-color: var(--color-primary-light);
   background: var(--color-white);
   color: var(--color-gray-700);
 }
@@ -2531,7 +2566,7 @@
 
 .inf-info-card {
   border-radius: 12px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-white);
   padding: 0.95rem;
 }
@@ -2558,7 +2593,7 @@
 
 .inf-action-card {
   border-radius: 14px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-white);
   padding: 0.95rem;
 }
@@ -2572,7 +2607,7 @@
 .inf-json-block {
   margin: 0.65rem 0 0;
   border-radius: 10px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-off-white);
   color: var(--color-gray-700);
   padding: 0.65rem;
@@ -2597,7 +2632,7 @@
   gap: 0.55rem;
   align-items: center;
   border-radius: 12px;
-  border: 1px solid #fff5f7;
+  border: 1px solid var(--color-primary-light);
   background: var(--color-white);
   padding: 0.45rem;
 }
@@ -2639,7 +2674,7 @@
   --ppd-pink-tint: color-mix(in srgb, var(--color-primary) 4%, var(--color-white));
   --ppd-blue-tint: color-mix(in srgb, var(--color-info) 4%, var(--color-white));
   --ppd-teal-tint: color-mix(in srgb, var(--color-success) 4%, var(--color-white));
-  --ppd-card-border: #fff5f7;
+  --ppd-card-border: var(--color-primary-light);
   display: grid;
   gap: 1rem;
 }
@@ -2699,7 +2734,7 @@
 }
 
 .ppd-top-actions .inf-btn-primary {
-  box-shadow: 0 8px 16px rgba(233, 30, 99, 0.2);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .ppd-nav-disclaimer {
@@ -2817,7 +2852,7 @@
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 3px 5px rgba(233, 30, 99, 0.14));
+  filter: drop-shadow(0 3px 5px color-mix(in srgb, var(--color-primary) 14%, transparent));
 }
 
 .ppd-line-dot {
@@ -3077,7 +3112,7 @@
   margin-top: 0.8rem;
   display: inline-flex;
   align-self: flex-start;
-  box-shadow: 0 6px 12px rgba(233, 30, 99, 0.14);
+  box-shadow: 0 6px 12px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .ppd-factors-card {

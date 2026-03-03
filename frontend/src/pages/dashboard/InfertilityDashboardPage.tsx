@@ -171,7 +171,7 @@ export default function InfertilityDashboardPage() {
       return {
         title: 'Higher infertility risk signal',
         explanation:
-          'Your results suggest a higher risk of infertility right now. You are not alone, and timely support can make a real difference.',
+          'This prediction suggests a higher infertility risk signal, but it is not a final diagnosis. It is used to estimate probabilities and risk levels so you can take early precautions.',
         nextSteps: [
           'Book a reproductive health consultation soon.',
           'Track cycle consistency and symptom severity daily.',
@@ -512,7 +512,7 @@ export default function InfertilityDashboardPage() {
               <p className="inf-result-kicker">ASSESSMENT COMPLETE</p>
               <h2 className="inf-result-title">Infertility Risk Assessment</h2>
               <p className="inf-result-meta">
-                Core probabilities, risk level, class prediction, and factor importance are rendered from backend output.
+                Your assessment is ready. Review what this result means and the next best steps below.
               </p>
             </div>
             <div className="inf-result-head-actions">
@@ -550,33 +550,22 @@ export default function InfertilityDashboardPage() {
                 <div>
                   <h3 className="inf-summary-title">{resultSummary?.title || result.risk_level}</h3>
                   <p className="inf-summary-text">
-                    Predicted class: <strong>{result.predicted_class.replaceAll('_', ' ')}</strong>
+                    Current category: <strong>{result.predicted_class.replaceAll('_', ' ')}</strong>
                   </p>
                   <p className="inf-summary-text">{resultSummary?.explanation}</p>
-                  <p className="inf-summary-text">
-                    Assessment mode: <strong>{result.assessment_mode.replaceAll('_', ' ')}</strong>
-                  </p>
-                  <p className="inf-summary-text">
-                    Decision threshold: <strong>{Math.round(result.decision_threshold * 100)}%</strong>
-                  </p>
-                  <p className="inf-summary-text">
-                    Model version: <strong>{result.model_version}</strong>
-                  </p>
                 </div>
               </article>
 
               <article className="inf-info-card">
-                <h4 className="inf-info-title">Probability Breakdown</h4>
+                <h4 className="inf-info-title">What These Prediction Results Mean</h4>
+                <p className="inf-summary-text">{resultSummary?.explanation}</p>
+                <p className="inf-summary-text">
+                  This is a screening estimate to guide follow-up care, not a final diagnosis. Here&apos;s some things you can immediately do:
+                </p>
                 <ul className="inf-list">
-                  <li>
-                    Overall infertility probability: <strong>{Math.round(result.probability_infertile * 100)}%</strong>
-                  </li>
-                  <li>
-                    Primary infertility probability: <strong>{Math.round(result.probability_primary * 100)}%</strong>
-                  </li>
-                  <li>
-                    Secondary infertility probability: <strong>{Math.round(result.probability_secondary * 100)}%</strong>
-                  </li>
+                  {resultSummary?.nextSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
                 </ul>
               </article>
 
@@ -601,38 +590,11 @@ export default function InfertilityDashboardPage() {
                 </div>
               </section>
 
-              <article className="inf-info-card">
-                <h4 className="inf-info-title">What This Result Means</h4>
-                <ul className="inf-list">
-                  {resultSummary?.nextSteps.map((step) => (
-                    <li key={step}>{step}</li>
-                  ))}
-                </ul>
-              </article>
             </div>
 
             <aside className="inf-result-side">
               <article className="inf-action-card">
-                <h3 className="inf-section-heading">Model Metadata</h3>
-                <ul className="inf-list">
-                  <li>
-                    Response model version: <strong>{result.model_version}</strong>
-                  </li>
-                  <li>
-                    Config model version: <strong>{modelInfo?.model_version || 'N/A'}</strong>
-                  </li>
-                  <li>
-                    Fused threshold (config):{' '}
-                    <strong>{modelInfo?.thresholds?.fused !== undefined ? `${Math.round(modelInfo.thresholds.fused * 100)}%` : 'N/A'}</strong>
-                  </li>
-                  <li>
-                    Training date (config): <strong>{modelInfo?.training_date_utc || 'N/A'}</strong>
-                  </li>
-                </ul>
-              </article>
-
-              <article className="inf-action-card">
-                <h3 className="inf-section-heading">Probabilities</h3>
+                <h3 className="inf-section-heading">Probability Breakdown</h3>
                 <ul className="inf-list">
                   <li>
                     Overall infertility probability: <strong>{Math.round(result.probability_infertile * 100)}%</strong>
@@ -647,11 +609,11 @@ export default function InfertilityDashboardPage() {
               </article>
 
               <article className="inf-action-card">
-                <h3 className="inf-section-heading">Models Used</h3>
+                <h3 className="inf-section-heading">Quick Guidance</h3>
                 <ul className="inf-list">
-                  {result.models_used.map((modelName) => (
-                    <li key={modelName}>{modelName}</li>
-                  ))}
+                  <li>Share this result with your healthcare provider.</li>
+                  <li>Keep logging symptoms to track changes over time.</li>
+                  <li>Seek care early if symptoms become more frequent or severe.</li>
                 </ul>
               </article>
 

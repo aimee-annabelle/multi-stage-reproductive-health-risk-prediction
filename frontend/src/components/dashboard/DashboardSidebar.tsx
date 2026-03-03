@@ -55,10 +55,10 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
     <aside className="dashboard-sidebar">
       <div className="sidebar-brand">
         <span className="sidebar-brand-icon">
-          <img src={appLogo} alt="ReproHealth logo" className="sidebar-brand-logo" />
+          <img src={appLogo} alt="EveBloom logo" className="sidebar-brand-logo" />
         </span>
         <div>
-          <p className="sidebar-brand-title">ReproHealth</p>
+          <p className="sidebar-brand-title">EveBloom</p>
           <p className="sidebar-brand-subtitle">Care Dashboard</p>
         </div>
       </div>

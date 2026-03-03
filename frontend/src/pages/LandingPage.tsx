@@ -1,9 +1,12 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import '../styles/landing.css'
 import heroImage from '../assets/home-page-women.jpg'
 import labImage from '../assets/lab-woman.jpg'
 import pregnancyImage from '../assets/pregnant-woman.jpg'
 import postpartumImage from '../assets/woman-baby.jpg'
+import appLogo from '../assets/logo.svg'
+import securityBackground from '../assets/security-background.png'
 
 type JourneyCard = {
   title: string
@@ -152,23 +155,18 @@ const Icon = ({ name }: { name: string }) => {
 }
 
 export default function LandingPage() {
+  const securitySectionStyle = {
+    '--security-bg-image': `url(${securityBackground})`,
+  } as CSSProperties
+
   return (
     <div className="landing-page">
       <header className="top-nav">
         <div className="brand">
           <span className="brand-mark" aria-hidden>
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M3 12h3l2-5 3 10 2-6h8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <img src={appLogo} alt="" className="brand-logo" />
           </span>
-          <span>Reproductive Health Predictor</span>
+          <span>EveBloom</span>
         </div>
 
         <nav className="desktop-nav" aria-label="Primary">
@@ -209,19 +207,6 @@ export default function LandingPage() {
               <Link className="button button-primary" to="/sign-up">
                 Start Your Assessment <span aria-hidden>→</span>
               </Link>
-              <Link className="button button-secondary" to="/sign-in">
-                View Demo
-              </Link>
-            </div>
-
-            <div className="hero-trust">
-              <div className="trust-dots" aria-hidden>
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-              <p>Trusted by 10,000+ women worldwide</p>
             </div>
           </div>
 
@@ -334,7 +319,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="security" id="security">
+        <section className="security" id="security" style={securitySectionStyle}>
           <div className="security-overlay" aria-hidden />
           <div className="security-content">
             <span className="security-icon" aria-hidden>
@@ -372,7 +357,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="site-footer">© 2026 Reproductive Health Predictor. All rights reserved.</footer>
+      <footer className="site-footer">© 2026 EveBloom. All rights reserved.</footer>
     </div>
   )
 }

@@ -7,14 +7,41 @@
    ============================================ */
 
 :root {
-  /* ===== PRIMARY COLORS (Magenta/Pink Brand) ===== */
-  --color-primary: #E91E63;           /* Vibrant magenta for CTAs, active states */
-  --color-primary-hover: #C2185B;     /* Darker magenta for hover states */
-  --color-primary-light: #F8BBD0;     /* Light pink for highlights */
-  --color-primary-pale: #FCE4EC;      /* Very pale pink for backgrounds */
+  /* ===== PRIMARY COLORS (Landing Reference) ===== */
+  --ink-900: #121d39;
+  --ink-700: #4a5f7f;
+  --ink-500: #6b7f99;
+  --line: #e7ebf2;
+  --bg-soft: #f7f8fb;
+  --pink-500: #f15bad;
+  --pink-600: #eb4fa4;
+  --pink-700: #d94a9a;
+
+  --color-primary: var(--pink-600);
+  --color-primary-hover: var(--pink-700);
+  --color-primary-light: var(--line);
+  --color-primary-pale: var(--bg-soft);
 
   /* ===== SECONDARY COLORS ===== */
-  --color-secondary: #FF6B9D;         /* Softer pink for secondary actions */
+  --color-secondary: var(--pink-500);
+
+  /* ===== AUTH PAGE COLORS ===== */
+  --auth-bg-page: #fdf8fb;
+  --auth-bg-kicker: #fdeef5;
+  --auth-bg-right: #f8edf3;
+  --auth-bg-agreement: #faf5f8;
+  --auth-bg-bars: #f2deeb;
+  --auth-bg-bars-active: #ef4298;
+  --auth-text-brand: #4e102f;
+  --auth-text-accent: #df3d90;
+  --auth-link: #ec4296;
+  --auth-accent: #ef4ca1;
+  --auth-error: #c6286f;
+  --auth-gradient-start: #f1429e;
+  --auth-gradient-end: #e7308f;
+  --auth-border-soft: #ecdce7;
+  --auth-shadow-submit: 0 10px 18px rgba(232, 54, 146, 0.24);
+
   --color-accent-orange: #FFB74D;     /* Warm accent (seen in charts) */
   --color-accent-yellow: #FFF59D;     /* Soft yellow for highlights */
 
@@ -195,7 +222,7 @@ body {
 .input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink-500) 18%, transparent);
 }
 
 /* Container */

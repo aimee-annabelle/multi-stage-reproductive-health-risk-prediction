@@ -1,9 +1,22 @@
-# Notebooks and Training Scripts
+# Notebooks and ML Training Pipelines
 
-This directory contains the model-development scripts used in the project.
+This directory contains the model-development backbone of EveBloom. It covers exploratory analysis, feature engineering, model training, tuning, evaluation, and report generation.
 
-## Infertility V1 Pipeline Scripts
+## ML Workflow Coverage
 
+These scripts represent a complete student-friendly ML lifecycle:
+
+1. Data understanding and quality checks
+2. Feature engineering and preprocessing
+3. Baseline model comparison
+4. Hyperparameter tuning
+5. Evaluation and visualization
+6. Artifact persistence for production inference
+7. Report generation for reproducibility
+
+## Infertility Modeling
+
+### V1 pipeline scripts
 - `01_exploratory_data_analysis.py`
 - `02_feature_engineering.py`
 - `03_data_preprocessing.py`
@@ -11,23 +24,20 @@ This directory contains the model-development scripts used in the project.
 - `05_hyperparameter_tuning.py`
 - `06_model_evaluation.py`
 
-Run full infertility v1 pipeline + report:
+Run full infertility pipeline:
 
 ```bash
 python notebooks/run_infertility_v1_pipeline.py
 ```
 
-Optional flags:
+Optional modes:
 
 ```bash
 python notebooks/run_infertility_v1_pipeline.py --skip-tuning
 python notebooks/run_infertility_v1_pipeline.py --report-only
 ```
 
-Outputs are written under `evaluation/infertility_v1/` and model artifacts under `ml/`.
-
-## Infertility V2 (Production Inference Artifacts)
-
+### V2 production artifacts (active runtime lineage)
 - `07_infertility_fusion_training.py`
 
 Run:
@@ -36,61 +46,41 @@ Run:
 python notebooks/07_infertility_fusion_training.py
 ```
 
-Creates:
-
+Outputs:
 - `ml/infertility_v2_symptom_model.pkl`
 - `ml/infertility_v2_history_model.pkl`
 - `ml/infertility_v2_metadata.pkl`
 - `ml/infertility_v2_feature_schema.pkl`
 
-## Pregnancy V1 Pipeline Scripts
+## Pregnancy Modeling
 
+Scripts:
 - `08_pregnancy_risk_training.py`
 - `09_pregnancy_model_evaluation.py`
 
-Run full pregnancy v1 pipeline + report:
+Run full pipeline:
 
 ```bash
 python notebooks/run_pregnancy_v1_pipeline.py
 ```
 
-Report-only mode:
+## Postpartum Modeling
 
-```bash
-python notebooks/run_pregnancy_v1_pipeline.py --report-only
-```
-
-Creates:
-
-- `ml/pregnancy_v1_model.pkl`
-- `ml/pregnancy_v1_metadata.pkl`
-- `ml/pregnancy_v1_feature_schema.pkl`
-- `evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md`
-
-## Postpartum V1 Pipeline Scripts
-
+Scripts:
 - `08_postpartum_omv_preprocessing.py`
 - `10_postpartum_risk_training.py`
 - `11_postpartum_model_evaluation.py`
 
-Run full postpartum v1 pipeline + report:
+Run full pipeline:
 
 ```bash
 python notebooks/run_postpartum_v1_pipeline.py
 ```
 
-Report-only mode:
+## Outputs and Artifacts
 
-```bash
-python notebooks/run_postpartum_v1_pipeline.py --report-only
-```
-
-Creates:
-
-- `ml/postpartum_v1_model.pkl`
-- `ml/postpartum_v1_metadata.pkl`
-- `ml/postpartum_v1_feature_schema.pkl`
-- `evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md`
+- Runtime model artifacts in `ml/`
+- Metrics, charts, and markdown reports in `evaluation/`
 
 ## Environment Setup
 
@@ -98,7 +88,7 @@ Creates:
 pip install -r requirements.txt
 ```
 
-Optional for notebook UI work:
+Optional notebook UI:
 
 ```bash
 pip install jupyter notebook ipykernel
