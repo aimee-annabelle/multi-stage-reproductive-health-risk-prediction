@@ -308,12 +308,12 @@ export default function PregnancyDashboardPage() {
   const latestRiskPercent = latestProbability === null ? null : Math.round(latestProbability * 100)
   const riskThresholdPercent = modelInfo ? Math.round(modelInfo.threshold * 100) : 50
   const riskTone = latestRiskPercent === null ? null : latestRiskPercent >= riskThresholdPercent ? 'high' : 'low'
-  const healthScore = latestRiskPercent === null ? null : Math.max(0, 100 - latestRiskPercent)
+  const displayedScore = latestRiskPercent
   const ringStyle = {
     background:
-      healthScore === null
+      displayedScore === null
         ? 'var(--color-primary-light)'
-        : `conic-gradient(from -88deg, var(--color-primary) ${healthScore}%, var(--color-primary-light) ${healthScore}% 100%)`,
+        : `conic-gradient(from -88deg, var(--color-primary) ${displayedScore}%, var(--color-primary-light) ${displayedScore}% 100%)`,
   }
 
   const chartData = useMemo(() => {
@@ -642,7 +642,7 @@ export default function PregnancyDashboardPage() {
               <div className="preg-monitor-score-frame">
                 <div className="preg-monitor-score-ring" style={ringStyle}>
                   <div className="preg-monitor-score-core">
-                    <p className="preg-monitor-score-value">{healthScore === null ? '--' : healthScore}</p>
+                    <p className="preg-monitor-score-value">{displayedScore === null ? '--' : displayedScore}</p>
                     <p className="preg-monitor-score-label">SCORE</p>
                   </div>
                 </div>

@@ -79,6 +79,18 @@ class PostpartumResponse(BaseModel):
     risk_level: Literal["Low Risk", "High Risk"] = Field(
         ..., description="Postpartum risk label"
     )
+    severity_level: Literal["Low Risk", "Medium Risk", "High Risk"] = Field(
+        ...,
+        description="Backend-derived severity tier from probability thresholds",
+    )
+    model_classification: Literal["binary_2_class"] = Field(
+        ...,
+        description="Underlying model class structure",
+    )
+    classification_note: str = Field(
+        ...,
+        description="Clarifies binary model classes vs backend severity tiers",
+    )
     decision_threshold: float = Field(..., ge=0.0, le=1.0)
     emergency_threshold: float = Field(..., ge=0.0, le=1.0)
     advise_hospital_visit: bool
@@ -114,6 +126,9 @@ class PostpartumAssessmentRecordResponse(BaseModel):
     probability_high_risk: float = Field(..., ge=0.0, le=1.0)
     probability_low_risk: float = Field(..., ge=0.0, le=1.0)
     risk_level: Literal["Low Risk", "High Risk"]
+    severity_level: Literal["Low Risk", "Medium Risk", "High Risk"]
+    model_classification: Literal["binary_2_class"]
+    classification_note: str
     decision_threshold: float = Field(..., ge=0.0, le=1.0)
     emergency_threshold: float = Field(..., ge=0.0, le=1.0)
     advise_hospital_visit: bool
@@ -145,6 +160,9 @@ class PostpartumTimelinePointResponse(BaseModel):
     probability_high_risk: float = Field(..., ge=0.0, le=1.0)
     probability_low_risk: float = Field(..., ge=0.0, le=1.0)
     risk_level: Literal["Low Risk", "High Risk"]
+    severity_level: Literal["Low Risk", "Medium Risk", "High Risk"]
+    model_classification: Literal["binary_2_class"]
+    classification_note: str
     advise_hospital_visit: bool
     advise_emergency_care: bool
     baby_age_months: float | None

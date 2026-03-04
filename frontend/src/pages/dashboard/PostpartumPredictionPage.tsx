@@ -20,9 +20,10 @@ import {
   initialPostpartumFormValues,
   yesNoOptions,
 } from './postpartumFormSets'
+type PostpartumSeverity = 'Low Risk' | 'Medium Risk' | 'High Risk'
 
-function getResultGuidance(result: PostpartumAssessmentRecordResponse) {
-  if (result.risk_level === 'High Risk') {
+function getResultGuidance(severity: PostpartumSeverity) {
+  if (severity === 'High Risk') {
     return {
       title: 'Higher postpartum risk signal',
       explanation:
@@ -31,6 +32,19 @@ function getResultGuidance(result: PostpartumAssessmentRecordResponse) {
         'Book a same-day or near-term clinical consultation.',
         'Share the top risk factors and referral advice shown below.',
         'Repeat assessment after support steps to track change over time.',
+      ],
+    }
+  }
+
+  if (severity === 'Medium Risk') {
+    return {
+      title: 'Moderate postpartum risk signal',
+      explanation:
+        'Your score is above the referral threshold but below the emergency threshold. Prompt same-day clinical follow-up is recommended.',
+      steps: [
+        'Schedule a same-day or next-day clinical consultation.',
+        'Share the top risk factors and referral advice shown below.',
+        'Repeat assessment after support steps to track direction of change.',
       ],
     }
   }
@@ -113,7 +127,7 @@ export default function PostpartumPredictionPage() {
       setResult(record)
 
       writeStageSnapshot(SNAPSHOT_KEYS.postpartum, {
-        riskLevel: record.risk_level,
+        riskLevel: record.severity_level,
         score: record.probability_high_risk * 100,
         summary: `${record.predicted_class.replaceAll('_', ' ')} at ${Math.round(record.probability_high_risk * 100)}% high-risk probability`,
         modelVersion: record.model_version,
@@ -130,12 +144,16 @@ export default function PostpartumPredictionPage() {
     }
   }
 
+  const resultSeverity = result?.severity_level ?? null
+  const resultSeverityTone =
+    resultSeverity === 'High Risk' ? 'high' : resultSeverity === 'Medium Risk' ? 'medium' : 'low'
+
   const resultGuidance = useMemo(() => {
-    if (!result) {
+    if (!result || !resultSeverity) {
       return null
     }
-    return getResultGuidance(result)
-  }, [result])
+    return getResultGuidance(resultSeverity)
+  }, [result, resultSeverity])
 
   const topFactors = useMemo(() => {
     if (!result) {
@@ -153,107 +171,108 @@ export default function PostpartumPredictionPage() {
       subtitle="Complete the assessment form to generate a stored prediction used by the postpartum dashboard charts."
     >
       <section className="stage-form-shell pp-form-page">
-        <section className="inf-page">
-          <div className="inf-step-meta-row">
-            <p className="inf-step-name">
-              {activeStep === 1 ? 'Stage 1: Postpartum Core Signals' : 'Stage 2: Contextual & Full EPDS Inputs'}
-            </p>
-            <p className="inf-step-count">Step {activeStep} of 2</p>
-          </div>
-
-          <div className="inf-progress-track">
-            <span className="inf-progress-fill" style={{ width: activeStep === 1 ? '50%' : '100%' }} />
-          </div>
-
-          <form
-            className="inf-card"
-            onSubmit={(event) => {
-              event.preventDefault()
-              if (activeStep === 1) {
-                setError(null)
-                setActiveStep(2)
-                return
-              }
-              void handleSubmit()
-            }}
-          >
-            <div className="inf-card-header">
-              <h2 className="inf-card-title">Postpartum Assessment Input</h2>
-              <p className="inf-card-subtitle">
-                Use this form to submit and store postpartum data. Each submission updates the dashboard trend and referral statistics.
+        {result ? null : (
+          <section className="inf-page">
+            <div className="inf-step-meta-row">
+              <p className="inf-step-name">
+                {activeStep === 1 ? 'Stage 1: Postpartum Core Signals' : 'Stage 2: Contextual & Full EPDS Inputs'}
               </p>
+              <p className="inf-step-count">Step {activeStep} of 2</p>
             </div>
 
-            {activeStep === 1 ? (
-              <div className="inf-section-stack">
-                <section className="inf-section">
-                  <h3 className="inf-section-title">Core Profile</h3>
-                  <div className="inf-grid-2">
-                    <label className="inf-field">
-                      <span className="inf-label">Age Group</span>
-                      <select
-                        value={formValues.age_group}
-                        onChange={(event) => setValue('age_group', event.target.value)}
-                        className="inf-input"
-                      >
-                        <option value="">Not provided</option>
-                        <option value="Below 25">Below 25</option>
-                        <option value="Above 25">Above 25</option>
-                      </select>
-                    </label>
+            <div className="inf-progress-track">
+              <span className="inf-progress-fill" style={{ width: activeStep === 1 ? '50%' : '100%' }} />
+            </div>
 
-                    <label className="inf-field">
-                      <span className="inf-label">Baby Age (months)</span>
-                      <input
-                        type="number"
-                        value={formValues.baby_age_months}
-                        onChange={(event) => setValue('baby_age_months', event.target.value)}
-                        placeholder="e.g., 3"
-                        className="inf-input"
-                      />
-                    </label>
+            <form
+              className="inf-card"
+              onSubmit={(event) => {
+                event.preventDefault()
+                if (activeStep === 1) {
+                  setError(null)
+                  setActiveStep(2)
+                  return
+                }
+                void handleSubmit()
+              }}
+            >
+              <div className="inf-card-header">
+                <h2 className="inf-card-title">Postpartum Assessment Input</h2>
+                <p className="inf-card-subtitle">
+                  Use this form to submit and store postpartum data. Each submission updates the dashboard trend and referral statistics.
+                </p>
+              </div>
 
-                    <label className="inf-field">
-                      <span className="inf-label">Weight Gain During Pregnancy (kg)</span>
-                      <input
-                        type="number"
-                        value={formValues.kgs_gained_during_pregnancy}
-                        onChange={(event) => setValue('kgs_gained_during_pregnancy', event.target.value)}
-                        placeholder="e.g., 11"
-                        className="inf-input"
-                      />
-                    </label>
-                  </div>
-                </section>
+              {activeStep === 1 ? (
+                <div className="inf-section-stack">
+                  <section className="inf-section">
+                    <h3 className="inf-section-title">Core Profile</h3>
+                    <div className="inf-grid-2">
+                      <label className="inf-field">
+                        <span className="inf-label">Age Group</span>
+                        <select
+                          value={formValues.age_group}
+                          onChange={(event) => setValue('age_group', event.target.value)}
+                          className="inf-input"
+                        >
+                          <option value="">Not provided</option>
+                          <option value="Below 25">Below 25</option>
+                          <option value="Above 25">Above 25</option>
+                        </select>
+                      </label>
 
-                <section className="inf-section">
-                  <h3 className="inf-section-title">Key Indicators</h3>
-                  <div className="inf-toggle-list">
-                    {coreBinaryFields.map((field) => {
-                      const selected = formValues[field.key]
-                      return (
-                        <div className="inf-toggle-row" key={field.key}>
-                          <div>
-                            <p className="inf-toggle-title">{field.label}</p>
-                            <p className="inf-toggle-hint">{field.hint}</p>
+                      <label className="inf-field">
+                        <span className="inf-label">Baby Age (months)</span>
+                        <input
+                          type="number"
+                          value={formValues.baby_age_months}
+                          onChange={(event) => setValue('baby_age_months', event.target.value)}
+                          placeholder="e.g., 3"
+                          className="inf-input"
+                        />
+                      </label>
+
+                      <label className="inf-field">
+                        <span className="inf-label">Weight Gain During Pregnancy (kg)</span>
+                        <input
+                          type="number"
+                          value={formValues.kgs_gained_during_pregnancy}
+                          onChange={(event) => setValue('kgs_gained_during_pregnancy', event.target.value)}
+                          placeholder="e.g., 11"
+                          className="inf-input"
+                        />
+                      </label>
+                    </div>
+                  </section>
+
+                  <section className="inf-section">
+                    <h3 className="inf-section-title">Key Indicators</h3>
+                    <div className="inf-toggle-list">
+                      {coreBinaryFields.map((field) => {
+                        const selected = formValues[field.key]
+                        return (
+                          <div className="inf-toggle-row" key={field.key}>
+                            <div>
+                              <p className="inf-toggle-title">{field.label}</p>
+                              <p className="inf-toggle-hint">{field.hint}</p>
+                            </div>
+                            <div className="inf-option-group">
+                              {yesNoOptions.map((option) => (
+                                <button
+                                  key={`${field.key}-${option.value}`}
+                                  type="button"
+                                  className={`inf-chip ${selected === option.value ? 'active' : ''}`}
+                                  onClick={() => setValue(field.key, option.value)}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <div className="inf-option-group">
-                            {yesNoOptions.map((option) => (
-                              <button
-                                key={`${field.key}-${option.value}`}
-                                type="button"
-                                className={`inf-chip ${selected === option.value ? 'active' : ''}`}
-                                onClick={() => setValue(field.key, option.value)}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </section>
+                        )
+                      })}
+                    </div>
+                  </section>
 
                 <section className="inf-section">
                   <h3 className="inf-section-title">Core EPDS Signals</h3>
@@ -422,7 +441,7 @@ export default function PostpartumPredictionPage() {
               </div>
             )}
 
-            {error ? <p className="inf-error-box">{error}</p> : null}
+              {error ? <p className="inf-error-box">{error}</p> : null}
 
             <div className="inf-action-row">
               <button type="button" onClick={clearForm} className="inf-btn inf-btn-ghost">
@@ -462,8 +481,9 @@ export default function PostpartumPredictionPage() {
                 )}
               </div>
             </div>
-          </form>
-        </section>
+            </form>
+          </section>
+        )}
 
         {result ? (
           <section className="inf-result-page">
@@ -474,8 +494,16 @@ export default function PostpartumPredictionPage() {
                 <p className="inf-result-meta">Your result has been saved and now contributes to the postpartum dashboard trend.</p>
               </div>
               <div className="inf-result-head-actions">
-                <span className={`inf-risk-pill ${result.risk_level === 'High Risk' ? 'inf-risk-pill-high-risk' : 'inf-risk-pill-low-risk'}`}>
-                  {result.risk_level}
+                <span
+                  className={`inf-risk-pill inf-risk-pill-${
+                    resultSeverityTone === 'high'
+                      ? 'high-risk'
+                      : resultSeverityTone === 'medium'
+                        ? 'moderate-risk'
+                        : 'low-risk'
+                  }`}
+                >
+                  {resultSeverity}
                 </span>
               </div>
             </div>
@@ -493,6 +521,9 @@ export default function PostpartumPredictionPage() {
                     </li>
                     <li>
                       Decision threshold: <strong>{Math.round(result.decision_threshold * 100)}%</strong>
+                    </li>
+                    <li>
+                      Classification mode: <strong>{result.classification_note}</strong>
                     </li>
                     <li>
                       Input completion: <strong>{Math.round(result.input_completion_pct)}%</strong>
@@ -554,6 +585,14 @@ export default function PostpartumPredictionPage() {
                     </li>
                   </ul>
                 </article>
+
+                <button
+                  type="button"
+                  className="inf-btn inf-btn-ghost inf-btn-full"
+                  onClick={clearForm}
+                >
+                  Run Another Prediction
+                </button>
 
                 <button
                   type="button"

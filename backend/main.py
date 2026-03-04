@@ -44,6 +44,9 @@ from backend.services.model_service import (
     load_pregnancy_artifacts,
 )
 from backend.services.prediction_service import (
+    POSTPARTUM_CLASSIFICATION_NOTE,
+    POSTPARTUM_MODEL_CLASSIFICATION,
+    get_postpartum_severity_level,
     predict_infertility,
     predict_postpartum,
     predict_pregnancy,
@@ -277,6 +280,13 @@ def postpartum_assessment_to_response(
         probability_high_risk=assessment.probability_high_risk,
         probability_low_risk=assessment.probability_low_risk,
         risk_level=assessment.risk_level,
+        severity_level=get_postpartum_severity_level(
+            probability_high_risk=assessment.probability_high_risk,
+            decision_threshold=assessment.decision_threshold,
+            emergency_threshold=assessment.emergency_threshold,
+        ),
+        model_classification=POSTPARTUM_MODEL_CLASSIFICATION,
+        classification_note=POSTPARTUM_CLASSIFICATION_NOTE,
         decision_threshold=assessment.decision_threshold,
         emergency_threshold=assessment.emergency_threshold,
         advise_hospital_visit=assessment.advise_hospital_visit,
@@ -539,6 +549,13 @@ async def get_postpartum_followup_timeline_summary(
             probability_high_risk=item.probability_high_risk,
             probability_low_risk=item.probability_low_risk,
             risk_level=item.risk_level,
+            severity_level=get_postpartum_severity_level(
+                probability_high_risk=item.probability_high_risk,
+                decision_threshold=item.decision_threshold,
+                emergency_threshold=item.emergency_threshold,
+            ),
+            model_classification=POSTPARTUM_MODEL_CLASSIFICATION,
+            classification_note=POSTPARTUM_CLASSIFICATION_NOTE,
             advise_hospital_visit=item.advise_hospital_visit,
             advise_emergency_care=item.advise_emergency_care,
             baby_age_months=item.baby_age_months,

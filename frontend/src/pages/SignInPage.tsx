@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, Lock, Shield } from 'lucide-react'
+import { Eye, EyeOff, Lock, Shield } from 'lucide-react'
 import '../styles/auth.css'
 import authImage from '../assets/authentication-image.jpg'
 import appLogo from '../assets/logo.svg'
@@ -15,6 +15,7 @@ export default function SignInPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
   useEffect(() => {
     return () => clearError()
@@ -70,13 +71,24 @@ export default function SignInPage() {
               <div className="input-wrap">
                 <input
                   id="signin-password"
-                  type="password"
+                  type={isPasswordVisible ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
                 />
-                <Eye className="input-icon" size={18} strokeWidth={1.8} aria-hidden />
+                <button
+                  type="button"
+                  className="input-icon-btn"
+                  aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+                  onClick={() => setIsPasswordVisible((previous) => !previous)}
+                >
+                  {isPasswordVisible ? (
+                    <EyeOff className="input-icon" size={18} strokeWidth={1.8} aria-hidden />
+                  ) : (
+                    <Eye className="input-icon" size={18} strokeWidth={1.8} aria-hidden />
+                  )}
+                </button>
               </div>
             </div>
 

@@ -7,6 +7,15 @@
 
 EveBloom is an end-to-end **machine learning system** for reproductive health risk screening across infertility, pregnancy, and postpartum stages. It is designed as a complete ML product workflow: data preparation, model training, artifact versioning, API inference services, and user-facing risk dashboards.
 
+## Deployed Version
+
+- Frontend (Railway): [EveBloom](https://frontendservice-production-1308.up.railway.app/)
+- Backend API (Railway): [Backend](https://backendservice-production-d4c1.up.railway.app)
+
+## Demo Video
+
+- 5-minute demo: 
+
 ## Why This Is an ML System
 
 EveBloom is not only an application wrapper around static rules. It uses trained models and ML artifacts to generate probabilistic risk outputs and factor-level explanations.

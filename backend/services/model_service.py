@@ -241,6 +241,11 @@ def get_postpartum_model_info() -> Dict[str, Any]:
         "model_version": metadata.get("model_version", "unknown"),
         "pipeline_type": metadata.get("pipeline_type", "single_branch_classifier"),
         "target_name": metadata.get("target_name", "ppd_risk"),
+        "model_classification": "binary_2_class",
+        "classification_note": (
+            "Model predicts two classes (low_postpartum_risk/high_postpartum_risk), "
+            "subdivided into Low/Medium/High severity by probability thresholds."
+        ),
         "training_date_utc": metadata.get("training_date_utc"),
         "recall_target": metadata.get("recall_target"),
         "threshold": decision_threshold,

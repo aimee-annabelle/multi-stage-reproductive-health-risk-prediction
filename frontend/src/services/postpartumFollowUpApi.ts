@@ -17,6 +17,9 @@ export type PostpartumAssessmentRecordResponse = {
   probability_high_risk: number
   probability_low_risk: number
   risk_level: 'Low Risk' | 'High Risk'
+  severity_level: 'Low Risk' | 'Medium Risk' | 'High Risk'
+  model_classification: 'binary_2_class'
+  classification_note: string
   decision_threshold: number
   emergency_threshold: number
   advise_hospital_visit: boolean
@@ -40,6 +43,9 @@ export type PostpartumTimelinePointResponse = {
   probability_high_risk: number
   probability_low_risk: number
   risk_level: 'Low Risk' | 'High Risk'
+  severity_level: 'Low Risk' | 'Medium Risk' | 'High Risk'
+  model_classification: 'binary_2_class'
+  classification_note: string
   advise_hospital_visit: boolean
   advise_emergency_care: boolean
   baby_age_months: number | null

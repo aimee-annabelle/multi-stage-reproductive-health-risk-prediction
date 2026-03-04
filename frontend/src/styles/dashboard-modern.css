@@ -3037,6 +3037,12 @@
   color: var(--color-success);
 }
 
+.ppd-risk-badge.medium {
+  background: color-mix(in srgb, var(--color-warning) 10%, var(--color-white));
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
 .ppd-risk-badge.high {
   background: color-mix(in srgb, var(--color-error) 8%, var(--color-white));
   border-color: var(--color-error);

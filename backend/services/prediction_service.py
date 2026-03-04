@@ -16,6 +16,12 @@ from backend.services.preprocessing_service import (
     prepare_v2_inputs,
 )
 
+POSTPARTUM_MODEL_CLASSIFICATION = "binary_2_class"
+POSTPARTUM_CLASSIFICATION_NOTE = (
+    "Model predicts two classes (low_postpartum_risk/high_postpartum_risk), "
+    "subdivided into Low/Medium/High severity by probability thresholds."
+)
+
 
 def _risk_level(probability: float, threshold: float) -> str:
     high_cutoff = 0.75
@@ -124,6 +130,18 @@ def _resolve_postpartum_emergency_threshold(
         return float(stored)
 
     return float(min(0.99, max(0.90, decision_threshold + 0.10)))
+
+
+def get_postpartum_severity_level(
+    probability_high_risk: float,
+    decision_threshold: float,
+    emergency_threshold: float,
+) -> str:
+    if probability_high_risk >= emergency_threshold:
+        return "High Risk"
+    if probability_high_risk >= decision_threshold:
+        return "Medium Risk"
+    return "Low Risk"
 
 
 def _pregnancy_referral_advice(
@@ -358,6 +376,13 @@ def predict_postpartum(request: PostpartumRequest) -> Dict[str, Any]:
         "probability_high_risk": round(probability_high_risk, 6),
         "probability_low_risk": round(probability_low_risk, 6),
         "risk_level": "High Risk" if is_high_risk else "Low Risk",
+        "severity_level": get_postpartum_severity_level(
+            probability_high_risk=probability_high_risk,
+            decision_threshold=decision_threshold,
+            emergency_threshold=emergency_threshold,
+        ),
+        "model_classification": POSTPARTUM_MODEL_CLASSIFICATION,
+        "classification_note": POSTPARTUM_CLASSIFICATION_NOTE,
         "decision_threshold": round(decision_threshold, 6),
         "emergency_threshold": round(emergency_threshold, 6),
         "advise_hospital_visit": advise_hospital_visit,

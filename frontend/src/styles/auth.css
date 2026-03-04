@@ -113,13 +113,25 @@
 }
 
 .input-icon {
+  color: #8ca0bc;
+  width: 18px;
+  height: 18px;
+}
+
+.input-icon-btn {
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #8ca0bc;
+  border: none;
+  background: transparent;
+  padding: 0;
   width: 18px;
   height: 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-row {

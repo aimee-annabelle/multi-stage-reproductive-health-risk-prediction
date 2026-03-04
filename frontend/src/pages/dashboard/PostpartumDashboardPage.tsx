@@ -211,7 +211,9 @@ export default function PostpartumDashboardPage() {
 
   const latestRiskPercent = latestRecord ? Math.round(latestRecord.probability_high_risk * 100) : null
   const thresholdPercent = modelInfo ? Math.round(modelInfo.decision_threshold * 100) : 50
-  const latestRiskTone = latestRiskPercent !== null && latestRiskPercent >= thresholdPercent ? 'high' : 'low'
+  const latestSeverity = latestRecord?.severity_level ?? null
+  const latestRiskTone =
+    latestSeverity === 'High Risk' ? 'high' : latestSeverity === 'Medium Risk' ? 'medium' : 'low'
 
   const trendLabel =
     timeline?.trend === 'increased'
@@ -238,8 +240,10 @@ export default function PostpartumDashboardPage() {
   const headerStatus = recoveryWeek === null ? 'Start with your first postpartum prediction.' : `Week ${recoveryWeek}: ${recoveryPhase}`
 
   const guidanceSummary =
-    latestRecord?.risk_level === 'High Risk'
+    latestSeverity === 'High Risk'
       ? 'Your latest record indicates elevated postpartum risk. Prioritize timely professional support and repeat tracking after interventions.'
+      : latestSeverity === 'Medium Risk'
+        ? 'Your latest record is above the referral threshold but below the emergency threshold. Arrange same-day follow-up and continue close monitoring.'
       : latestRecord
         ? 'Your latest record is below the risk threshold. Continue routine monitoring and track any symptom changes.'
         : 'No postpartum records yet. Start with your first prediction to unlock trend monitoring and personalized guidance.'
@@ -391,8 +395,12 @@ export default function PostpartumDashboardPage() {
                   <div className="ppd-mini-grid">
                     <div>
                       <p>Risk Level</p>
-                      <strong className={`ppd-risk-badge ${latestRiskTone === 'high' ? 'high' : 'low'}`}>
-                        {latestRecord?.risk_level || 'No Data'}
+                      <strong
+                        className={`ppd-risk-badge ${
+                          latestRiskTone === 'high' ? 'high' : latestRiskTone === 'medium' ? 'medium' : 'low'
+                        }`}
+                      >
+                        {latestSeverity || 'No Data'}
                       </strong>
                     </div>
                     <div>
@@ -433,6 +441,11 @@ export default function PostpartumDashboardPage() {
                     <span>Model threshold</span>
                     <strong>{thresholdPercent}%</strong>
                   </div>
+                  <p className="ppd-side-muted">
+                    {latestRecord?.classification_note ||
+                      modelInfo?.classification_note ||
+                      'Model predicts two classes and subdivides them into Low/Medium/High severity by percentage thresholds.'}
+                  </p>
                   {isLoadingWidgets ? <p className="ppd-side-muted">Refreshing dashboard...</p> : null}
                 </article>
               </div>
