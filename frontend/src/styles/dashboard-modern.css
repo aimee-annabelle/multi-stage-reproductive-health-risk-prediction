@@ -485,6 +485,22 @@
   overflow: hidden;
 }
 
+.overview-stage-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.overview-stage-card-link:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.overview-stage-card-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .overview-stage-grid {
   display: grid;
   grid-template-columns: 188px minmax(0, 1fr);
@@ -881,6 +897,7 @@
 
   .overview-stage-grid {
     grid-template-columns: 1fr;
+    height: auto;
     min-height: auto;
   }
 
@@ -890,6 +907,7 @@
   }
 
   .overview-stage-image {
+    height: 170px;
     min-height: 170px;
     max-height: 230px;
   }

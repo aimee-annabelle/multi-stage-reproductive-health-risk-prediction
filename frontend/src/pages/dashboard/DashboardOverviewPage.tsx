@@ -334,7 +334,7 @@ export default function DashboardOverviewPage() {
           const summary = stageSummaries[stage.key]
 
           return (
-            <article key={stage.key} className="overview-stage-card">
+            <Link key={stage.key} to={stage.route} className="overview-stage-card overview-stage-card-link">
               <div className="overview-stage-grid">
                 <img src={stage.image} alt={stage.label} className="overview-stage-image" />
 
@@ -377,13 +377,13 @@ export default function DashboardOverviewPage() {
                       <p className="overview-stage-model">Model: {summary.modelVersion}</p>
                     </div>
 
-                    <Link to={stage.route} className="overview-stage-btn">
+                    <span className="overview-stage-btn">
                       {stage.buttonLabel}
-                    </Link>
+                    </span>
                   </div>
                 </div>
               </div>
-            </article>
+            </Link>
           )
         })}
       </section>
