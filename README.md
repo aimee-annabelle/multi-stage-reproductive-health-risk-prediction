@@ -14,7 +14,7 @@ EveBloom is an end-to-end **machine learning system** for reproductive health ri
 
 ## Demo Video
 
-- 5-minute demo: 
+- [Link to Demo Video](https://www.canva.com/design/DAHDAajD8RU/ZH4wv72W6Z2Asf3EhwdVdQ/watch?utm_content=DAHDAajD8RU&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h4cfae68b0b)
 
 ## Why This Is an ML System
 
