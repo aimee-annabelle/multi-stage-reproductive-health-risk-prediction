@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Eye, Lock, Shield } from 'lucide-react'
 import '../styles/auth.css'
 import authImage from '../assets/authentication-image.jpg'
+import appLogo from '../assets/logo.svg'
 import { useAuthStore } from '../stores/authStore'
 
 export default function SignInPage() {
@@ -34,21 +36,14 @@ export default function SignInPage() {
         <div className="auth-form-wrap">
           <Link to="/" className="auth-brand">
             <span className="auth-brand-mark" aria-hidden>
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="6" r="3" fill="currentColor" />
-                <circle cx="8" cy="12" r="3" fill="currentColor" />
-                <circle cx="16" cy="12" r="3" fill="currentColor" />
-                <circle cx="12" cy="18" r="3" fill="currentColor" />
-              </svg>
+              <img src={appLogo} alt="" className="auth-brand-logo" />
             </span>
-            Natalis AI
+            EveBloom
           </Link>
 
           <p className="auth-kicker">
             <span className="kicker-icon" aria-hidden>
-              <svg viewBox="0 0 24 24">
-                <path d="M12 3l7 3v6c0 5-3.4 8.4-7 10-3.6-1.6-7-5-7-10V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2" />
-              </svg>
+              <Shield size={12} strokeWidth={2} />
             </span>
             Secure Medical Portal
           </p>
@@ -81,10 +76,7 @@ export default function SignInPage() {
                   onChange={(event) => setPassword(event.target.value)}
                   required
                 />
-                <svg className="input-icon" viewBox="0 0 24 24" aria-hidden>
-                  <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                  <circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                </svg>
+                <Eye className="input-icon" size={18} strokeWidth={1.8} aria-hidden />
               </div>
             </div>
 
@@ -97,35 +89,11 @@ export default function SignInPage() {
 
             <button type="submit" className="auth-submit" disabled={isLoading}>
               <span className="auth-submit-icon" aria-hidden>
-                <svg viewBox="0 0 24 24">
-                  <path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
-                </svg>
+                <Lock size={16} strokeWidth={2} />
               </span>
               {isLoading ? 'Signing in...' : 'Secure Login'}
             </button>
           </form>
-
-          <p className="divider">Or access via</p>
-
-          <div className="socials">
-            <button type="button">
-              <span className="social-icon" aria-hidden>
-                <svg viewBox="0 0 24 24">
-                  <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.3 1.9-2.2 3.5-5.5 3.5a5.8 5.8 0 110-11.6c1.7 0 3.1.6 4.2 1.7l2.7-2.6A9.3 9.3 0 0012 2.8a9.4 9.4 0 100 18.8c5.4 0 9-3.8 9-9 0-.6 0-1-.1-1.4H12z"/>
-                </svg>
-              </span>
-              Google
-            </button>
-            <button type="button">
-              <span className="social-icon" aria-hidden>
-                <svg viewBox="0 0 24 24">
-                  <path fill="#334155" d="M16.6 12.6c0-2.2 1.8-3.2 1.9-3.2-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.6 0-3 .9-3.8 2.3-1.6 2.7-.4 6.8 1.2 9.1.8 1.1 1.7 2.4 2.9 2.4 1.1 0 1.6-.7 3-.7 1.4 0 1.8.7 3 .7 1.3 0 2.1-1.1 2.9-2.2.9-1.3 1.2-2.6 1.2-2.7 0 0-2.7-1-2.7-4zM14.4 6.4c.7-.8 1.1-1.8 1-2.9-1 .1-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.8 1 .1 2.1-.5 2.8-1.4z"/>
-                </svg>
-              </span>
-              Apple
-            </button>
-          </div>
 
           <p className="auth-foot-line">
             Don&apos;t have an account? <Link className="auth-link" to="/sign-up">Sign up securely</Link>
@@ -134,7 +102,10 @@ export default function SignInPage() {
           <div className="auth-meta">
             <span>Privacy Policy</span>
             <span>Terms of Service</span>
-            <span>🔒 256-bit SSL Encrypted</span>
+            <span className="auth-meta-lock">
+              <Lock size={12} strokeWidth={2} aria-hidden />
+              256-bit SSL Encrypted
+            </span>
           </div>
         </div>
       </section>

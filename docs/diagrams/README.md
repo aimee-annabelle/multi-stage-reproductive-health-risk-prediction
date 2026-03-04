@@ -1,31 +1,29 @@
 # Diagrams and Screenshots
 
-This folder contains architecture and API screenshots for documentation.
+This folder is intended to store architecture visuals and UI screenshots for EveBloom documentation.
 
-## Files
+## Planned / In Progress
 
-- `class-diagram.png`
-- `erd-diagram.png`
-- `system-architecture.png`
-- `api-screenshot.png`
+The following diagrams are planned for this folder:
 
-## Important Note
+- `system-architecture.png` — end-to-end component diagram (frontend → backend → ML artifacts → database)
+- `erd-diagram.png` — database entity-relationship diagram (users, sessions, assessments)
+- `api-screenshot.png` — Swagger UI screenshot from `http://localhost:8000/docs`
 
-Some diagram images were created earlier in development and may not include all current endpoints.
+## Source of Truth
 
-Current source of truth for implementation is:
+Until diagrams are added, the authoritative references are:
 
-- `backend/main.py` (active API routes)
-- `backend/models/request.py` and `backend/models/response.py` (schemas)
-- `docs/API_DOCUMENTATION.md` (written API reference)
+- `backend/main.py` — active route registrations
+- `backend/models/request.py` and `backend/models/response.py` — request/response schemas
+- `docs/API_DOCUMENTATION.md` — full API reference
+- `db/models.py` — database schema
 
-## Current Implemented API Areas
+## Current Functional Areas
 
 - Authentication (`/auth/*`)
 - Infertility prediction (`/predict/infertility`)
 - Pregnancy prediction (`/predict/pregnancy`)
-- Pregnancy follow-up tracking:
-  - `/pregnancy/follow-up/assess`
-  - `/pregnancy/follow-up/history`
-  - `/pregnancy/follow-up/compare/latest`
-  - `/pregnancy/follow-up/timeline/summary`
+- Postpartum prediction (`/predict/postpartum`)
+- Pregnancy follow-up tracking (`/pregnancy/follow-up/*`)
+- Postpartum follow-up tracking (`/postpartum/follow-up/*`)

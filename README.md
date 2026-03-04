@@ -1,168 +1,205 @@
-# Multi-Stage Reproductive Health Risk Prediction System
+# EveBloom - ML-Based Multi-Stage Reproductive Health Risk Prediction System
 
-[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/aimee-annabelle/multi-stage-reproductive-health-risk-prediction)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-green.svg)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Overview
+EveBloom is an end-to-end **machine learning system** for reproductive health risk screening across infertility, pregnancy, and postpartum stages. It is designed as a complete ML product workflow: data preparation, model training, artifact versioning, API inference services, and user-facing risk dashboards.
 
-This project implements a multi-stage backend for reproductive health risk support:
+## Why This Is an ML System
 
-- Stage 1: Infertility risk prediction (dual-branch fusion)
-- Stage 2: Pregnancy risk prediction (single-model binary classifier)
-- Stage 3: Postpartum risk prediction (single-model binary classifier)
-- Authenticated pregnancy follow-up tracking over time
+EveBloom is not only an application wrapper around static rules. It uses trained models and ML artifacts to generate probabilistic risk outputs and factor-level explanations.
 
-The API is built with FastAPI and SQLAlchemy, and uses persisted model artifacts from the `ml/` directory.
+- **Data-driven inference:** predictions are generated from trained models in `ml/`, not hardcoded thresholds alone.
+- **Stage-specific modeling:** each clinical stage has a dedicated model strategy and output schema.
+- **Probability-based outputs:** the system returns risk probabilities and levels to support triage-style screening.
+- **Feature-level interpretability:** top risk factor signals are returned for explainability in the UI.
+- **Model lifecycle support:** training scripts, evaluation reports, and metadata are part of the repo.
 
-## What Is Implemented
+## ML Architecture by Stage
 
-### Stage 1: Infertility Prediction
+### Stage 1: Infertility Risk (Fusion Inference)
 
 - Endpoint: `POST /predict/infertility`
-- Model strategy: dual-branch fusion (`symptom`, `history`, or `fused` mode)
-- Output classes:
-  - `no_infertility_risk`
-  - `primary_infertility_risk`
-  - `secondary_infertility_risk`
-- Metadata endpoint: `GET /model/info`
+- Strategy: dual-branch fusion (`symptom_only`, `history_only`, `fused`)
+- Output:
+  - predicted class (`no_infertility_risk`, `primary_infertility_risk`, `secondary_infertility_risk`)
+  - class probabilities
+  - risk level (`Low`, `Moderate`, `High`)
+  - top contributing factors
 
-### Stage 2: Pregnancy Prediction
+### Stage 2: Pregnancy Risk (Binary Classifier)
 
 - Endpoint: `POST /predict/pregnancy`
-- Binary output classes:
-  - `low_pregnancy_risk`
-  - `high_pregnancy_risk`
-- Supports partial payloads with model-side imputation
-- Returns:
-  - decision threshold
-  - emergency threshold
+- Output:
+  - class (`low_pregnancy_risk`, `high_pregnancy_risk`)
+  - high/low probabilities
+  - risk level + referral/emergency guidance
   - top risk factors
-  - referral/emergency advice flags and messages
-- Metadata endpoint: `GET /model/info/pregnancy`
 
-### Stage 3: Postpartum Prediction
+### Stage 3: Postpartum Risk (Binary Classifier)
 
 - Endpoint: `POST /predict/postpartum`
-- Binary output classes:
-  - `low_postpartum_risk`
-  - `high_postpartum_risk`
-- Supports partial payloads with model-side imputation
-- Returns:
-  - decision threshold
-  - emergency threshold
+- Output:
+  - class (`low_postpartum_risk`, `high_postpartum_risk`)
+  - high/low probabilities
+  - risk level + referral/emergency guidance
   - top risk factors
-  - referral/emergency advice flags and messages
-- Metadata endpoint: `GET /model/info/postpartum`
 
-### Authentication and Follow-Up Tracking
-
-- Auth endpoints:
-  - `POST /auth/signup`
-  - `POST /auth/login`
-  - `GET /auth/me`
-  - `POST /auth/logout`
-- User-linked pregnancy follow-up endpoints:
-  - `POST /pregnancy/follow-up/assess`
-  - `GET /pregnancy/follow-up/history`
-  - `GET /pregnancy/follow-up/compare/latest`
-  - `GET /pregnancy/follow-up/timeline/summary`
-
-All follow-up endpoints require `Authorization: Bearer <access_token>`.
-
-## Repository Structure
+## End-to-End System Components
 
 ```text
 multi-stage-reproductive-health-risk-prediction/
-├── backend/
-├── data/
-│   └── processed/
-├── docs/
-├── evaluation/
-│   ├── infertility_v1/
-│   ├── pregnancy_v1/
-│   └── postpartum_v1/
-├── frontend/
-├── ml/
-├── notebooks/
-├── requirements.txt
-└── README.md
+├── backend/                  # FastAPI inference + auth + follow-up APIs
+├── frontend/                 # User-facing interface and dashboards
+├── ml/                       # Persisted trained model artifacts for runtime inference
+├── notebooks/                # Training/evaluation pipelines
+├── data/                     # Raw + processed datasets
+├── evaluation/               # Metrics, plots, stage reports
+├── docs/                     # API docs, diagrams, payload examples
+├── docker-compose.yml        # Containerized deployment
+└── requirements.txt
 ```
 
-For a more detailed tree, see `PROJECT_STRUCTURE.md`.
+## Product + ML Workflow
 
-## Setup
+1. **Train and evaluate models** with scripts in `notebooks/`.
+2. **Persist artifacts** in `ml/` (models, metadata, schemas).
+3. **Serve inference** via FastAPI endpoints in `backend/main.py`.
+4. **Capture follow-up assessments** for pregnancy/postpartum longitudinal views.
+5. **Render explainable results** in the React dashboards.
+
+## Quick Start (Local)
 
 ### Prerequisites
 
 - Python 3.12+
-- PostgreSQL
-- Node.js 20+ (for frontend)
+- Node.js 20+
+- PostgreSQL 14+
 
-### 1. Install Python dependencies
+### 1. Install dependencies
 
 ```bash
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+
+cd frontend
+npm install
+cd ..
 ```
 
-### 2. Configure backend environment
+### 2. Configure backend env
 
 ```bash
 cp backend/.env.example backend/.env
 ```
 
 Use either:
+
 - `DATABASE_URL` (recommended), or
 - `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`
 
-### 3. Run migrations
+### 3. Create the database
+
+Create the PostgreSQL database before running migrations:
+
+```bash
+psql -U postgres -c "CREATE DATABASE reproductive_health;"
+```
+
+Or interactively via `psql`:
+
+```sql
+CREATE DATABASE reproductive_health;
+```
+
+### 4. Apply migrations
 
 ```bash
 alembic -c backend/alembic.ini upgrade head
 ```
 
-### 4. Start backend
+### 5. Run backend
 
 ```bash
 python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Docs will be available at `http://localhost:8000/docs`.
-
-### 5. Start frontend (optional)
+### 6. Run frontend
 
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
-Frontend dev URL: `http://localhost:5173`
+URLs:
 
-## Model Training and Evaluation
+- Frontend: `http://localhost:5173`
+- API Docs: `http://localhost:8000/docs`
 
-### Train infertility fusion artifacts
+## Docker Deployment
 
-```bash
-python notebooks/07_infertility_fusion_training.py
-```
-
-### Train pregnancy v1 artifacts
+Run full stack:
 
 ```bash
-python notebooks/08_pregnancy_risk_training.py
+docker compose up --build
 ```
 
-### Train postpartum v1 artifacts
+Services:
+
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8000`
+- PostgreSQL: `localhost:5432`
+
+Stop:
 
 ```bash
-python notebooks/run_postpartum_v1_pipeline.py
+docker compose down
 ```
 
-### Generate evaluation reports
+## Current API Surface
+
+### Core
+
+- `GET /`
+- `GET /health`
+
+### Authentication
+
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /auth/me`
+- `POST /auth/logout`
+
+### Model Metadata
+
+- `GET /model/info`
+- `GET /model/info/pregnancy`
+- `GET /model/info/postpartum`
+
+### Prediction APIs
+
+- `POST /predict/infertility`
+- `POST /predict/pregnancy`
+- `POST /predict/postpartum`
+
+### Follow-Up APIs
+
+- Pregnancy:
+  - `POST /pregnancy/follow-up/assess`
+  - `GET /pregnancy/follow-up/history`
+  - `GET /pregnancy/follow-up/compare/latest`
+  - `GET /pregnancy/follow-up/timeline/summary`
+- Postpartum:
+  - `POST /postpartum/follow-up/assess`
+  - `GET /postpartum/follow-up/history`
+  - `GET /postpartum/follow-up/timeline/summary`
+
+## Model Development and Evaluation
+
+Run full pipelines:
 
 ```bash
 python notebooks/run_infertility_v1_pipeline.py
@@ -170,65 +207,61 @@ python notebooks/run_pregnancy_v1_pipeline.py
 python notebooks/run_postpartum_v1_pipeline.py
 ```
 
-## API Endpoints
+Key outputs:
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/` | API map |
-| GET | `/health` | Health check |
-| POST | `/auth/signup` | Register user |
-| POST | `/auth/login` | Login user |
-| GET | `/auth/me` | Get current user |
-| POST | `/auth/logout` | Logout |
-| GET | `/model/info` | Infertility model metadata |
-| GET | `/model/info/pregnancy` | Pregnancy model metadata |
-| GET | `/model/info/postpartum` | Postpartum model metadata |
-| POST | `/predict/infertility` | Infertility risk prediction |
-| POST | `/predict/pregnancy` | Pregnancy risk prediction |
-| POST | `/predict/postpartum` | Postpartum risk prediction |
-| POST | `/pregnancy/follow-up/assess` | Predict + store pregnancy assessment |
-| GET | `/pregnancy/follow-up/history` | List stored pregnancy assessments |
-| GET | `/pregnancy/follow-up/compare/latest` | Compare latest two assessments |
-| GET | `/pregnancy/follow-up/timeline/summary` | Timeline summary for trend monitoring |
+- Runtime artifacts in `ml/`
+- Performance reports in `evaluation/*`
+
+## Model Performance Summary
+
+| Stage            | Model            | Test Accuracy | Test ROC-AUC | Weighted F1 | Report                                                                         |
+| ---------------- | ---------------- | ------------: | -----------: | ----------: | ------------------------------------------------------------------------------ |
+| Infertility (v1) | GradientBoosting |        0.9266 |       0.9662 |      0.9203 | [INFERTILITY_V1_REPORT.md](evaluation/infertility_v1/INFERTILITY_V1_REPORT.md) |
+| Pregnancy (v1)   | (see report)     |        0.9625 |       0.9997 |           — | [PREGNANCY_V1_REPORT.md](evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md)       |
+| Postpartum (v1)  | RandomForest     |        0.7007 |       0.8561 |      0.7050 | [POSTPARTUM_V1_REPORT.md](evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md)    |
+
+> Note: Postpartum uses a recall-priority threshold (0.33) to maximise screening sensitivity for at-risk cases.
 
 ## Testing
 
-Integration tests are PostgreSQL-only.
-
 ```bash
+# Create the test database (first time only)
+psql -U postgres -c "CREATE DATABASE reproductive_health_test;"
+
 export DATABASE_URL="postgresql+psycopg2://postgres:<password>@localhost:5432/reproductive_health_test"
 alembic -c backend/alembic.ini upgrade head
 pytest
 ```
 
-## Artifacts and Reports
+## Troubleshooting
 
-### ML artifacts (`ml/`)
+**`alembic upgrade head` fails immediately**
+The database does not exist. Run `psql -U postgres -c "CREATE DATABASE reproductive_health;"` first.
 
-- `infertility_v2_symptom_model.pkl`
-- `infertility_v2_history_model.pkl`
-- `infertility_v2_metadata.pkl`
-- `infertility_v2_feature_schema.pkl`
-- `pregnancy_v1_model.pkl`
-- `pregnancy_v1_metadata.pkl`
-- `pregnancy_v1_feature_schema.pkl`
-- `postpartum_v1_model.pkl`
-- `postpartum_v1_metadata.pkl`
-- `postpartum_v1_feature_schema.pkl`
+**`503 Service Unavailable` on prediction endpoints**
+Model artifacts in `ml/` are missing or were not generated. Run the pipeline scripts in `notebooks/` to produce them, then restart the backend.
 
-### Evaluation reports
+**Frontend shows network errors / CORS blocks requests**
+Set `VITE_API_URL` in your frontend environment to match the backend address (`http://localhost:8000`). Check that `CORS_ORIGINS` in `backend/.env` includes the frontend URL.
 
-- `evaluation/infertility_v1/INFERTILITY_V1_REPORT.md`
-- `evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md`
-- `evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md`
+**`422 Unprocessable Entity` on follow-up compare endpoint**
+The user has fewer than 2 stored assessments. Submit at least 2 follow-up assessments before calling `/pregnancy/follow-up/compare/latest`.
 
-## Datasets Used
+**`psql` command not found on macOS**
+Install PostgreSQL via Homebrew: `brew install postgresql@14`.
 
-- `data/processed/Female infertility.csv`
-- `data/processed/dhs_cleaned.csv`
-- `data/processed/pregnancy-risk-dataset.csv`
-- `data/processed/postpartum_omv_cleaned.csv`
+**Backend import errors when running locally**
+Run the backend from the repository root (not from inside `backend/`): `python -m uvicorn backend.main:app --reload`.
+
+## Additional Docs
+
+- Backend details: [backend/README.md](backend/README.md)
+- Frontend details: [frontend/README.md](frontend/README.md)
+- ML training details: [notebooks/README.md](notebooks/README.md)
+- API reference: [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
+- Example payloads: [docs/example_test_payloads.md](docs/example_test_payloads.md)
+- Model performance: [evaluation/](evaluation/)
 
 ## Disclaimer
 
-This system is for educational and screening-support purposes and does not replace professional medical diagnosis or emergency care.
+EveBloom provides screening-oriented ML risk estimates for decision support and educational use. It is not a diagnostic device and does not replace professional medical judgment or emergency care.

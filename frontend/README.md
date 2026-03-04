@@ -1,30 +1,34 @@
-# Frontend
+# Frontend - EveBloom ML Dashboard
 
-React + TypeScript frontend for the reproductive health prediction system.
+This frontend is the user-facing layer of EveBloom. It presents ML predictions in clear, actionable language and provides workflow support for repeated assessments across infertility, pregnancy, and postpartum stages.
 
-## Tech Stack
+## Frontend Role in the ML Product
 
+The UI is designed to make ML output usable by non-technical users.
+
+- Collects structured inputs aligned to backend inference schemas
+- Sends payloads to prediction APIs
+- Renders risk scores, classes, and factor-level insights
+- Presents user-friendly explanations and recommended next steps
+- Displays follow-up timeline signals for ongoing monitoring
+
+## Stack
 - React 19
 - TypeScript
 - Vite
-- Tailwind CSS v4
 - React Router
 - Zustand
+- Lucide Icons
 
-## Setup
+## Local Development
 
 ```bash
 cd frontend
 npm install
-```
-
-## Run
-
-```bash
 npm run dev
 ```
 
-Default dev URL: `http://localhost:5173`
+Default URL: `http://localhost:5173`
 
 ## Build
 
@@ -33,44 +37,61 @@ npm run build
 npm run preview
 ```
 
-## Current App Structure
+## Runtime Configuration
+
+Frontend API base URL:
+- `VITE_API_URL`
+
+Default fallback if not set:
+- `http://localhost:8000`
+
+Example:
+
+```bash
+VITE_API_URL=http://localhost:8000 npm run dev
+```
+
+## Routes
+
+### Public
+- `/` - Landing page
+- `/sign-in` - Sign-in
+- `/sign-up` - Account creation
+
+### Protected
+- `/dashboard` - Overview
+- `/dashboard/infertility` - Infertility input + result interpretation
+- `/dashboard/pregnancy` - Pregnancy monitor + follow-up
+- `/dashboard/postpartum` - Postpartum dashboard
+
+## Project Structure
 
 ```text
 frontend/src/
 ├── App.tsx
 ├── main.tsx
+├── components/dashboard/
 ├── pages/
 │   ├── LandingPage.tsx
 │   ├── SignInPage.tsx
 │   ├── SignUpPage.tsx
-│   └── DashboardPage.tsx
+│   └── dashboard/
 ├── services/
-│   ├── authApi.ts
-│   └── infertilityApi.ts
 ├── stores/
-│   ├── authStore.ts
-│   └── dashboardStore.ts
 ├── styles/
-│   ├── auth.css
-│   ├── dashboard.css
-│   └── landing.css
 └── assets/
 ```
 
-## Routing
+## Docker
 
-- `/` landing page
-- `/sign-in` sign-in page
-- `/sign-up` sign-up page
-- `/dashboard` protected route (requires auth state)
+Frontend production image uses multi-stage build + Nginx:
+- `frontend/Dockerfile`
+- `frontend/nginx.conf`
 
-## Backend Integration
+Run with compose:
 
-The frontend consumes backend endpoints from `backend/main.py`.
+```bash
+docker compose up --build
+```
 
-Typical local setup:
-
-- Backend: `http://localhost:8000`
-- Frontend: `http://localhost:5173`
-
-Make sure backend CORS allows frontend origin (`CORS_ORIGINS`).
+Exposed at `http://localhost:5173`.

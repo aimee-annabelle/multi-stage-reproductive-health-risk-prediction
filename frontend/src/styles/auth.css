@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #fdf8fb;
+  background: var(--auth-bg-page);
 }
 
 .auth-left {
@@ -24,23 +24,20 @@
   gap: 10px;
   font-family: var(--font-family-heading);
   font-size: 36px;
-  color: #4e102f;
+  color: var(--auth-text-brand);
   text-decoration: none;
 }
 
 .auth-brand-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: #ffe8f3;
-  color: #ef4ea2;
-  display: inline-grid;
-  place-items: center;
+  width: 36px;
+  height: 36px;
+  display: inline-block;
 }
 
-.auth-brand-mark svg {
-  width: 16px;
-  height: 16px;
+.auth-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .auth-kicker {
@@ -48,8 +45,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #fdeef5;
-  color: #df3d90;
+  background: var(--auth-bg-kicker);
+  color: var(--auth-text-accent);
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 12px;
@@ -61,7 +58,7 @@
 .kicker-icon {
   width: 12px;
   height: 12px;
-  color: #df3d90;
+  color: var(--auth-text-accent);
 }
 
 .kicker-icon svg {
@@ -135,7 +132,7 @@
 }
 
 .auth-link {
-  color: #ec4296;
+  color: var(--auth-link);
   font-weight: 700;
   text-decoration: none;
 }
@@ -144,13 +141,13 @@
   margin-top: 2px;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(130deg, #f1429e, #e7308f);
+  background: linear-gradient(130deg, var(--auth-gradient-start), var(--auth-gradient-end));
   color: #fff;
   font-family: var(--font-family-heading);
   font-size: 16px;
   padding: 14px 16px;
   cursor: pointer;
-  box-shadow: 0 10px 18px rgba(232, 54, 146, 0.24);
+  box-shadow: var(--auth-shadow-submit);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -163,7 +160,7 @@
 }
 
 .auth-error {
-  color: #c6286f;
+  color: var(--auth-error);
   font-size: 13px;
   margin-top: -2px;
 }
@@ -171,62 +168,15 @@
 .auth-submit-icon {
   width: 16px;
   height: 16px;
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
 }
 
 .auth-submit-icon svg {
   width: 16px;
   height: 16px;
-}
-
-.divider {
-  margin: 16px 0;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 10px;
-  color: #93a3ba;
-  font-size: 14px;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  height: 1px;
-  background: #dfe6f0;
-}
-
-.socials {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.socials button {
-  border: 1px solid #d6deea;
-  border-radius: 10px;
-  background: #fff;
-  padding: 10px 12px;
-  color: #324661;
-  font-size: 15px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.social-icon {
-  width: 18px;
-  height: 18px;
-  display: inline-grid;
-  place-items: center;
-}
-
-.social-icon svg {
-  width: 18px;
-  height: 18px;
 }
 
 .auth-foot-line {
@@ -245,10 +195,16 @@
   font-size: 12px;
 }
 
+.auth-meta-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .auth-agreement {
   margin-top: 2px;
-  border: 1px solid #ecdce7;
-  background: #faf5f8;
+  border: 1px solid var(--auth-border-soft);
+  background: var(--auth-bg-agreement);
   border-radius: 10px;
   padding: 12px;
   display: grid;
@@ -262,11 +218,11 @@
 .auth-agreement svg {
   width: 18px;
   height: 18px;
-  color: #ef4ca1;
+  color: var(--auth-accent);
 }
 
 .auth-right {
-  background: #f8edf3;
+  background: var(--auth-bg-right);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -319,7 +275,7 @@
 }
 
 .auth-status-head span {
-  color: #ed469d;
+  color: var(--auth-accent);
   font-size: 15px;
 }
 
@@ -332,7 +288,7 @@
 }
 
 .auth-balance strong {
-  color: #eb4398;
+  color: var(--auth-accent);
 }
 
 .auth-bars {
@@ -345,7 +301,7 @@
 .auth-bars span {
   height: 12px;
   border-radius: 3px;
-  background: #f2deeb;
+  background: var(--auth-bg-bars);
 }
 
 .auth-bars span:nth-child(4) {
@@ -354,7 +310,7 @@
 
 .auth-bars span:nth-child(6) {
   height: 26px;
-  background: #ef4298;
+  background: var(--auth-bg-bars-active);
 }
 
 @media (max-width: 980px) {

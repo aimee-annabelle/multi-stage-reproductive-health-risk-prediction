@@ -8,7 +8,8 @@ multi-stage-reproductive-health-risk-prediction/
 │   ├── alembic/
 │   │   └── versions/
 │   ├── api/
-│   │   └── routes/                     # legacy/experimental route modules
+│   │   └── routes/                     # archived/experimental modules (not used at runtime;
+│   │                                   # active routes are in main.py)
 │   ├── db/
 │   │   ├── base.py
 │   │   ├── models.py                   # users, sessions, pregnancy_assessments

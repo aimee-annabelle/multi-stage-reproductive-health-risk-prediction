@@ -8,6 +8,7 @@
   --pink-600: #eb4fa4;
   --pink-700: #d94a9a;
   --card-shadow: 0 6px 18px rgba(27, 39, 64, 0.1);
+  --security-bg-image: none;
 }
 
 .landing-page {
@@ -40,16 +41,13 @@
 .brand-mark {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(130deg, #f578bb, #ea4fa3);
-  color: #fff;
-  display: inline-grid;
-  place-items: center;
+  display: inline-block;
 }
 
-.brand-mark svg {
-  width: 24px;
-  height: 24px;
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .desktop-nav {
@@ -161,39 +159,6 @@
   background: linear-gradient(140deg, var(--pink-500), var(--pink-700));
   color: #fff;
   box-shadow: 0 12px 24px rgba(234, 83, 166, 0.25);
-}
-
-.button-secondary {
-  background: #fff;
-  border-color: #cbd4e0;
-  color: #3f5474;
-}
-
-.hero-trust {
-  margin-top: 28px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.hero-trust p {
-  margin: 0;
-  color: #6f8099;
-  font-size: 14px;
-}
-
-.trust-dots {
-  display: flex;
-  align-items: center;
-}
-
-.trust-dots span {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #cfd8e3;
-  border: 3px solid #f7f8fb;
-  margin-right: -10px;
 }
 
 .hero-image-wrap {
@@ -561,6 +526,7 @@
 
 .security {
   position: relative;
+  isolation: isolate;
   background:
     radial-gradient(circle at 18% 80%, rgba(255, 162, 196, 0.2), transparent 32%),
     radial-gradient(circle at 85% 30%, rgba(168, 38, 88, 0.44), transparent 28%),
@@ -572,6 +538,18 @@
       rgba(255, 255, 255, 0) 24px
     ),
     linear-gradient(140deg, #6f0029 0%, #520026 100%);
+}
+
+.security::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--security-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.1;
+  z-index: 0;
 }
 
 .security::before {
@@ -586,12 +564,14 @@
   border-bottom: none;
   border-radius: 240px 240px 0 0;
   opacity: 0.8;
+  z-index: 1;
 }
 
 .security-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(53, 0, 24, 0.1), rgba(53, 0, 24, 0.52));
+  z-index: 1;
 }
 
 .security-content {
@@ -599,6 +579,7 @@
   margin: 0 auto;
   padding: 58px 0 64px;
   position: relative;
+  z-index: 2;
   text-align: center;
   color: #fff;
 }
@@ -792,7 +773,6 @@
   .brand-mark {
     width: 34px;
     height: 34px;
-    border-radius: 10px;
   }
 
   .hero {
@@ -811,8 +791,7 @@
   .step-item p,
   .security-content > p,
   .security-card p,
-  .final-cta p,
-  .hero-trust p {
+  .final-cta p {
     font-size: 1.02rem;
   }
 
@@ -826,13 +805,6 @@
     border-radius: 14px;
     font-size: 1rem;
     padding: 14px 16px;
-  }
-
-  .trust-dots span {
-    width: 26px;
-    height: 26px;
-    margin-right: -5px;
-    border-width: 2px;
   }
 
   .hero-image-wrap {
