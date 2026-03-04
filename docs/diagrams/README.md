@@ -1,22 +1,23 @@
 # Diagrams and Screenshots
 
-This folder stores architecture visuals and UI screenshots for EveBloom documentation.
+This folder is intended to store architecture visuals and UI screenshots for EveBloom documentation.
 
-## Files
+## Planned / In Progress
 
-- `system-architecture.png`
-- `erd-diagram.png`
-- `class-diagram.png`
-- `api-screenshot.png`
+The following diagrams are planned for this folder:
 
-## Notes
+- `system-architecture.png` — end-to-end component diagram (frontend → backend → ML artifacts → database)
+- `erd-diagram.png` — database entity-relationship diagram (users, sessions, assessments)
+- `api-screenshot.png` — Swagger UI screenshot from `http://localhost:8000/docs`
 
-Some images may represent earlier development snapshots.
+## Source of Truth
 
-Current implementation source of truth:
-- `backend/main.py` (active endpoints)
-- `backend/models/request.py` and `backend/models/response.py` (schemas)
-- `docs/API_DOCUMENTATION.md` (reference docs)
+Until diagrams are added, the authoritative references are:
+
+- `backend/main.py` — active route registrations
+- `backend/models/request.py` and `backend/models/response.py` — request/response schemas
+- `docs/API_DOCUMENTATION.md` — full API reference
+- `db/models.py` — database schema
 
 ## Current Functional Areas
 

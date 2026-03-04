@@ -57,7 +57,7 @@ Header format:
 
 #### Optional history fields
 
-- `bmi` (10-8000; supports legacy BMI*100 encoding)
+- `bmi` (10-8000; supports legacy BMI\*100 encoding)
 - `smoked_last_12mo` (0 or 1)
 - `alcohol_last_12mo` (0 or 1)
 - `age_at_first_marriage` (0-60, and must be `>= 8` when `ever_cohabited=1`)
@@ -154,6 +154,34 @@ Header format:
 - `epds_thought_of_harming_self`
 
 At least one field must be provided.
+
+#### Categorical field valid values
+
+| Field                | Valid values                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `age_group`          | `"Below 25"`, `"Above 25"`                                                                  |
+| `marital_status`     | `"Married"`, `"Divorced"`, `"Single"`                                                       |
+| `household_income`   | `"Insufficient"`, `"Sufficient"`, `"More than sufficient"`                                  |
+| `level_of_education` | `"Primary"`, `"Preparatory or high school"`, `"University or above"`                        |
+| `residency`          | `"Urban"`, `"Rural"`                                                                        |
+| `comorbidities`      | `"Nothing"`, `"Medical and Physical illness"`, `"Mental and psychiatric illness"`, `"both"` |
+
+#### EPDS scale valid response strings
+
+The Edinburgh Postnatal Depression Scale (EPDS) is a 10-item standardised screening questionnaire. Each item maps to a 4-point response scale. Unrecognised values are passed through to the model; omitted fields are imputed.
+
+| Field                              | Valid response options                                                                                                                                                                          |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `epds_laugh_and_funny_side`        | `"As much as I always could"`, `"Not quite so much now"`, `"Definitely not use"`, `"Not at all"`                                                                                                |
+| `epds_looked_forward_enjoyment`    | `"As much as I ever did"`, `"Rather less than I used to"`, `"Definitely less than I used to"`, `"rarely"`                                                                                       |
+| `epds_blamed_myself`               | `"No, never"`, `"Not very often"`, `"Yes, some of the time"`, `"Yes, most of the time"`                                                                                                         |
+| `epds_anxious_or_worried`          | `"No, not at all"`, `"Hardly ever"`, `"Yes, sometimes"`, `"Yes, very often"`                                                                                                                    |
+| `epds_scared_or_panicky`           | `"No, not at all"`, `"No, not much"`, `"Yes, sometimes"`, `"Yes, quite a lot"`                                                                                                                  |
+| `epds_things_getting_on_top`       | `"No, I have been coping as well as ever"`, `"No, most of the time I have coped quite well"`, `"Yes, sometimes I haven't been coping as well as usual"`, `"I haven't been able to cope at all"` |
+| `epds_unhappy_difficulty_sleeping` | `"No, not at all"`, `"Not very often"`, `"Yes, sometimes"`, `"Yes, most of the time"`                                                                                                           |
+| `epds_sad_or_miserable`            | `"No, not at all"`, `"Not very often"`, `"Yes, quite often"`, `"Yes, most of the time"`                                                                                                         |
+| `epds_unhappy_crying`              | `"No, never"`, `"Only occasionally"`, `"Yes, quite often"`, `"Yes, most of the time"`                                                                                                           |
+| `epds_thought_of_harming_self`     | `"Never"`, `"Hardly ever"`, `"Sometimes"`, `"Yes, quite often"`                                                                                                                                 |
 
 #### Response keys
 

@@ -13,6 +13,7 @@ The backend is where trained artifacts become usable clinical-screening services
 - Stores follow-up assessments for trend analysis over time
 
 ## Tech Stack
+
 - FastAPI
 - SQLAlchemy
 - Alembic
@@ -57,6 +58,7 @@ python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 API docs:
+
 - `http://localhost:8000/docs`
 - `http://localhost:8000/redoc`
 
@@ -65,6 +67,7 @@ API docs:
 Use `DATABASE_URL` for deployed/runtime environments.
 
 Fallback database variables:
+
 - `POSTGRES_HOST`
 - `POSTGRES_PORT`
 - `POSTGRES_DB`
@@ -73,6 +76,7 @@ Fallback database variables:
 - `POSTGRES_SSLMODE`
 
 Other important settings:
+
 - `CORS_ORIGINS`
 - `HOST`
 - `PORT`
@@ -80,22 +84,26 @@ Other important settings:
 ## Endpoint Groups
 
 ### Authentication
+
 - `POST /auth/signup`
 - `POST /auth/login`
 - `GET /auth/me`
 - `POST /auth/logout`
 
 ### Inference APIs
+
 - `POST /predict/infertility`
 - `POST /predict/pregnancy`
 - `POST /predict/postpartum`
 
 ### Model Metadata
+
 - `GET /model/info`
 - `GET /model/info/pregnancy`
 - `GET /model/info/postpartum`
 
 ### Follow-Up Tracking
+
 - Pregnancy:
   - `POST /pregnancy/follow-up/assess`
   - `GET /pregnancy/follow-up/history`
@@ -119,6 +127,9 @@ alembic -c backend/alembic.ini downgrade -1
 Integration tests require PostgreSQL.
 
 ```bash
+# Create the test database (first time only)
+psql -U postgres -c "CREATE DATABASE reproductive_health_test;"
+
 export DATABASE_URL="postgresql+psycopg2://postgres:<password>@localhost:5432/reproductive_health_test"
 alembic -c backend/alembic.ini upgrade head
 pytest

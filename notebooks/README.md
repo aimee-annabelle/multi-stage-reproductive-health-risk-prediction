@@ -2,6 +2,32 @@
 
 This directory contains the model-development backbone of EveBloom. It covers exploratory analysis, feature engineering, model training, tuning, evaluation, and report generation.
 
+## Prerequisites
+
+Before running any training pipeline, ensure the following processed datasets exist:
+
+| File                                         | Required by                    |
+| -------------------------------------------- | ------------------------------ |
+| `data/processed/infertility_features_v1.csv` | Infertility v1 pipeline        |
+| `data/processed/dhs_cleaned.csv`             | Infertility v2 fusion training |
+| `data/processed/pregnancy-risk-dataset.csv`  | Pregnancy v1 pipeline          |
+| `data/processed/postpartum_omv_cleaned.csv`  | Postpartum v1 pipeline         |
+
+If `data/processed/` is empty or missing these files, the pipeline scripts will fail. See [data/README.md](../data/README.md) for dataset sourcing instructions.
+
+## Environment Setup
+
+```bash
+pip install -r requirements.txt
+```
+
+Optional notebook UI:
+
+```bash
+pip install jupyter notebook ipykernel
+jupyter notebook
+```
+
 ## ML Workflow Coverage
 
 These scripts represent a complete student-friendly ML lifecycle:
@@ -17,6 +43,7 @@ These scripts represent a complete student-friendly ML lifecycle:
 ## Infertility Modeling
 
 ### V1 pipeline scripts
+
 - `01_exploratory_data_analysis.py`
 - `02_feature_engineering.py`
 - `03_data_preprocessing.py`
@@ -38,6 +65,7 @@ python notebooks/run_infertility_v1_pipeline.py --report-only
 ```
 
 ### V2 production artifacts (active runtime lineage)
+
 - `07_infertility_fusion_training.py`
 
 Run:
@@ -47,6 +75,7 @@ python notebooks/07_infertility_fusion_training.py
 ```
 
 Outputs:
+
 - `ml/infertility_v2_symptom_model.pkl`
 - `ml/infertility_v2_history_model.pkl`
 - `ml/infertility_v2_metadata.pkl`
@@ -55,6 +84,7 @@ Outputs:
 ## Pregnancy Modeling
 
 Scripts:
+
 - `08_pregnancy_risk_training.py`
 - `09_pregnancy_model_evaluation.py`
 
@@ -67,6 +97,7 @@ python notebooks/run_pregnancy_v1_pipeline.py
 ## Postpartum Modeling
 
 Scripts:
+
 - `08_postpartum_omv_preprocessing.py`
 - `10_postpartum_risk_training.py`
 - `11_postpartum_model_evaluation.py`
@@ -81,16 +112,6 @@ python notebooks/run_postpartum_v1_pipeline.py
 
 - Runtime model artifacts in `ml/`
 - Metrics, charts, and markdown reports in `evaluation/`
-
-## Environment Setup
-
-```bash
-pip install -r requirements.txt
-```
-
-Optional notebook UI:
-
-```bash
-pip install jupyter notebook ipykernel
-jupyter notebook
-```
+  - [INFERTILITY_V1_REPORT.md](../evaluation/infertility_v1/INFERTILITY_V1_REPORT.md)
+  - [PREGNANCY_V1_REPORT.md](../evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md)
+  - [POSTPARTUM_V1_REPORT.md](../evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md)
