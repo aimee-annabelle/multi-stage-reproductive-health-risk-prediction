@@ -227,14 +227,20 @@ export default function PregnancyDashboardPage() {
     const age = Number(formValues.age)
     const systolic = Number(formValues.systolic_bp)
     const diastolic = Number(formValues.diastolic)
+    const gestationalAgeWeeks = Number(formValues.gestational_age_weeks)
+    const hasRecords = (timeline?.total_records ?? 0) > 0 || Boolean(latestRecord)
 
     if (!Number.isFinite(age) || !Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
       setError('Age, systolic BP, and diastolic BP are required numeric values.')
       return
     }
 
+    if (!hasRecords && !Number.isFinite(gestationalAgeWeeks)) {
+      setError('Gestational age (weeks) is required for the baseline assessment.')
+      return
+    }
+
     const visitLabel = formValues.visit_label.trim()
-    const hasRecords = (timeline?.total_records ?? 0) > 0 || Boolean(latestRecord)
 
     const payload: PregnancyFollowUpAssessPayload = {
       age,
@@ -387,8 +393,14 @@ export default function PregnancyDashboardPage() {
     const age = Number(formValues.age)
     const systolic = Number(formValues.systolic_bp)
     const diastolic = Number(formValues.diastolic)
-    if (!Number.isFinite(age) || !Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
-      setError('Age, systolic BP, and diastolic BP are required numeric values.')
+    const gestationalAgeWeeks = Number(formValues.gestational_age_weeks)
+    if (
+      !Number.isFinite(age) ||
+      !Number.isFinite(systolic) ||
+      !Number.isFinite(diastolic) ||
+      !Number.isFinite(gestationalAgeWeeks)
+    ) {
+      setError('Age, systolic BP, diastolic BP, and gestational age are required numeric values.')
       return
     }
     setError(null)
@@ -470,7 +482,7 @@ export default function PregnancyDashboardPage() {
                       </label>
                     ))}
                   </div>
-                  <p className="inf-meta-line">Required: Age, systolic BP, and diastolic BP.</p>
+                  <p className="inf-meta-line">Required: Age, systolic BP, diastolic BP, and gestational age.</p>
                 </section>
               </div>
             ) : (

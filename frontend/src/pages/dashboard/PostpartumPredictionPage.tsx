@@ -346,11 +346,11 @@ export default function PostpartumPredictionPage() {
                         className="inf-input"
                       >
                         <option value="">Not provided</option>
-                        <option value="i had insurance">I had insurance</option>
-                        <option value="on the country cost">On the country cost</option>
-                        <option value="i charge for my self">I charge for myself</option>
+                        <option value="i had insurance">I had insurance coverage</option>
+                        <option value="on the country cost">Covered by government services</option>
+                        <option value="i charge for my self">I paid for services myself</option>
                         <option value="the maternal and baby services provided for free">
-                          Maternal and baby services provided for free
+                          Maternal and baby services were provided for free
                         </option>
                         <option value="others">Others</option>
                       </select>

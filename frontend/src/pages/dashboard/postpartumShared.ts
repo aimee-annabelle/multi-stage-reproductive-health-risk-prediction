@@ -9,7 +9,7 @@ export const epdsOptionsByField: Record<string, string[]> = {
   epds_laugh_and_funny_side: [
     'As much as I always could',
     'Not quite so much now',
-    'Definitely not use',
+    'Definitely not so much now',
     'Not at all',
   ],
   epds_looked_forward_enjoyment: [
