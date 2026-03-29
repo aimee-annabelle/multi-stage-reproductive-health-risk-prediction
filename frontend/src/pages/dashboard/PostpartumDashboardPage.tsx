@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { ApiError } from '../../services/apiClient'
-import { getPostpartumModelInfo, type PostpartumModelInfo } from '../../services/predictionApi'
 import {
   getPostpartumFollowUpHistory,
   getPostpartumTimelineSummary,
@@ -21,7 +20,6 @@ export default function PostpartumDashboardPage() {
   const logout = useAuthStore((state) => state.logout)
   const user = useAuthStore((state) => state.user)
 
-  const [modelInfo, setModelInfo] = useState<PostpartumModelInfo | null>(null)
   const [latestRecord, setLatestRecord] = useState<PostpartumAssessmentRecordResponse | null>(null)
   const [history, setHistory] = useState<PostpartumAssessmentHistoryResponse | null>(null)
   const [timeline, setTimeline] = useState<PostpartumTimelineSummaryResponse | null>(null)
@@ -74,17 +72,6 @@ export default function PostpartumDashboardPage() {
     let active = true
 
     const bootstrap = async () => {
-      try {
-        const info = await getPostpartumModelInfo()
-        if (active) {
-          setModelInfo(info)
-        }
-      } catch {
-        if (active) {
-          setModelInfo(null)
-        }
-      }
-
       if (active) {
         await loadWidgets()
       }
@@ -195,6 +182,8 @@ export default function PostpartumDashboardPage() {
     })
   }, [daySlots])
 
+  const loggedDaysCount = useMemo(() => daySlots.filter((slot) => slot.hasLog).length, [daySlots])
+
   const topFactors = useMemo(() => {
     if (!latestRecord) {
       return []
@@ -210,7 +199,6 @@ export default function PostpartumDashboardPage() {
   }, [latestRecord])
 
   const latestRiskPercent = latestRecord ? Math.round(latestRecord.probability_high_risk * 100) : null
-  const thresholdPercent = modelInfo ? Math.round(modelInfo.decision_threshold * 100) : 50
   const latestSeverity = latestRecord?.severity_level ?? null
   const latestRiskTone =
     latestSeverity === 'High Risk' ? 'high' : latestSeverity === 'Medium Risk' ? 'medium' : 'low'
@@ -378,6 +366,21 @@ export default function PostpartumDashboardPage() {
                         No log
                       </span>
                     </div>
+
+                    <div className="ppd-chart-footer">
+                      <article className="ppd-chart-footer-card">
+                        <span>Latest check-in</span>
+                        <strong>{latestSeverity || 'No data yet'}</strong>
+                      </article>
+                      <article className="ppd-chart-footer-card">
+                        <span>Days logged</span>
+                        <strong>{loggedDaysCount}/7 days</strong>
+                      </article>
+                      <article className="ppd-chart-footer-card">
+                        <span>Recovery phase</span>
+                        <strong>{recoveryPhase}</strong>
+                      </article>
+                    </div>
                   </div>
                 ) : (
                   <p className="preg-monitor-placeholder-note">No timeline points available yet.</p>
@@ -386,15 +389,15 @@ export default function PostpartumDashboardPage() {
 
               <div className="ppd-side-stack">
                 <article className="ppd-card ppd-side-card ppd-recovery-card">
-                  <h3>Physical Recovery</h3>
+                  <h3>Latest Check-in</h3>
                   <p className="ppd-side-value">{latestRiskPercent ?? '--'}%</p>
-                  <p className="ppd-side-muted">Current high-risk probability</p>
+                  <p className="ppd-side-muted">Current level of concern from your latest entry</p>
                   <div className="ppd-meter">
                     <span style={{ width: `${latestRiskPercent ?? 0}%` }} />
                   </div>
                   <div className="ppd-mini-grid">
                     <div>
-                      <p>Risk Level</p>
+                      <p>Current Level</p>
                       <strong
                         className={`ppd-risk-badge ${
                           latestRiskTone === 'high' ? 'high' : latestRiskTone === 'medium' ? 'medium' : 'low'
@@ -404,7 +407,7 @@ export default function PostpartumDashboardPage() {
                       </strong>
                     </div>
                     <div>
-                      <p>Input Quality</p>
+                      <p>Form Filled</p>
                       <strong>{latestInputCompletion}%</strong>
                     </div>
                   </div>
@@ -428,24 +431,20 @@ export default function PostpartumDashboardPage() {
                 </article>
 
                 <article className="ppd-card ppd-side-card ppd-essentials-card">
-                  <h3>Daily Essentials</h3>
+                  <h3>Quick Overview</h3>
                   <div className="ppd-stat-row">
                     <span>Records tracked</span>
                     <strong>{history?.total_records ?? 0}</strong>
                   </div>
                   <div className="ppd-stat-row">
-                    <span>Average form completion</span>
+                    <span>Average form filled</span>
                     <strong>{averageInputCompletion}%</strong>
                   </div>
                   <div className="ppd-stat-row">
-                    <span>Model threshold</span>
-                    <strong>{thresholdPercent}%</strong>
+                    <span>Current trend</span>
+                    <strong>{trendLabel}</strong>
                   </div>
-                  <p className="ppd-side-muted">
-                    {latestRecord?.classification_note ||
-                      modelInfo?.classification_note ||
-                      'Model predicts two classes and subdivides them into Low/Medium/High severity by percentage thresholds.'}
-                  </p>
+                  <p className="ppd-side-muted">{guidanceSummary}</p>
                   {isLoadingWidgets ? <p className="ppd-side-muted">Refreshing dashboard...</p> : null}
                 </article>
               </div>
@@ -453,7 +452,7 @@ export default function PostpartumDashboardPage() {
 
             <div className="ppd-quick-grid">
               <article className="ppd-card ppd-quick-card ppd-factors-card">
-                <h4>Top Risk Factors</h4>
+                <h4>What Stood Out</h4>
                 {topFactors.length > 0 ? (
                   <ul>
                     {topFactors.map((factor) => (
@@ -469,19 +468,20 @@ export default function PostpartumDashboardPage() {
               </article>
 
               <article className="ppd-card ppd-quick-card ppd-guidance-card">
-                <h4>Latest Guidance</h4>
-                <p>{latestRecord?.hospital_advice || 'Run another prediction to update guidance.'}</p>
-                <small>{latestRecord?.emergency_advice || ''}</small>
+                <span className="ppd-guidance-kicker">Latest Guidance</span>
+                <h4>What to do now</h4>
+                <p>{latestRecord?.hospital_advice || 'Run another prediction to get updated guidance.'}</p>
+                {latestRecord?.emergency_advice ? (
+                  <small>
+                    <strong>Urgent note:</strong> {latestRecord.emergency_advice}
+                  </small>
+                ) : null}
               </article>
 
               <article className="ppd-card ppd-quick-card ppd-class-card">
-                <h4>Prediction Class</h4>
-                <p>
-                  {latestRecord?.predicted_class
-                    ? latestRecord.predicted_class.replaceAll('_', ' ')
-                    : 'No class available yet'}
-                </p>
-                <small>Model version: {latestRecord?.model_version || modelInfo?.model_version || 'Unavailable'}</small>
+                <span className="ppd-class-kicker">Current Outlook</span>
+                <h4>{latestSeverity || 'No result yet'}</h4>
+                <p>{guidanceSummary}</p>
                 <button
                   type="button"
                   className="inf-btn inf-btn-primary ppd-card-cta"

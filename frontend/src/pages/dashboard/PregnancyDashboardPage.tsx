@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, ClipboardList } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import FormFieldInfo from '../../components/dashboard/FormFieldInfo'
 import { useAuthStore } from '../../stores/authStore'
 import { ApiError } from '../../services/apiClient'
 import { getPregnancyModelInfo, type PregnancyModelInfo } from '../../services/predictionApi'
@@ -117,6 +118,84 @@ function recordToFormValues(record: PregnancyAssessmentRecordResponse): Pregnanc
     notes: record.notes || '',
   }
 }
+
+const requiredVitalFields = [
+  { key: 'age', label: 'Age (years)', placeholder: '28', description: 'Current age in years.' },
+  {
+    key: 'systolic_bp',
+    label: 'Systolic BP (mmHg)',
+    placeholder: '120',
+    description: 'Top blood pressure number in mmHg.',
+  },
+  {
+    key: 'diastolic',
+    label: 'Diastolic BP (mmHg)',
+    placeholder: '80',
+    description: 'Bottom blood pressure number in mmHg.',
+  },
+  {
+    key: 'gestational_age_weeks',
+    label: 'Gestational Age (weeks)',
+    placeholder: '28',
+    description: 'Current pregnancy week.',
+  },
+] as const
+
+const optionalClinicalFields = [
+  {
+    key: 'bs',
+    label: 'Blood Sugar (bs)',
+    placeholder: '6.1',
+    description: 'Blood sugar level.',
+  },
+  {
+    key: 'body_temp',
+    label: 'Body Temp (F)',
+    placeholder: '98.6',
+    description: 'Body temperature in degrees Fahrenheit.',
+  },
+  {
+    key: 'bmi',
+    label: 'BMI',
+    placeholder: '24.2',
+    description: 'Body Mass Index based on height and weight.',
+  },
+  {
+    key: 'heart_rate',
+    label: 'Heart Rate',
+    placeholder: '78',
+    description: 'Heart beats per minute.',
+  },
+] as const
+
+const pregnancyIndicatorFields = [
+  {
+    key: 'previous_complications',
+    label: 'Previous complications',
+    description: 'Whether there have been pregnancy complications before.',
+  },
+  {
+    key: 'preexisting_diabetes',
+    label: 'Preexisting diabetes',
+    description: 'Diabetes present before pregnancy.',
+  },
+  {
+    key: 'gestational_diabetes',
+    label: 'Gestational diabetes',
+    description: 'Diabetes diagnosed during pregnancy.',
+  },
+  {
+    key: 'mental_health',
+    label: 'Mental health concerns',
+    description: 'Mental or emotional health concerns.',
+  },
+] as const
+
+const pregnancyMetadataDescriptions = {
+  visit_label:
+    'Short name for this check-in.',
+  notes: 'Optional notes for this check-in.',
+} as const
 
 export default function PregnancyDashboardPage() {
   const navigate = useNavigate()
@@ -309,11 +388,12 @@ export default function PregnancyDashboardPage() {
   const riskThresholdPercent = modelInfo ? Math.round(modelInfo.threshold * 100) : 50
   const riskTone = latestRiskPercent === null ? null : latestRiskPercent >= riskThresholdPercent ? 'high' : 'low'
   const displayedScore = latestRiskPercent
+  const scoreTrackColor = '#f8dce9'
   const ringStyle = {
     background:
       displayedScore === null
-        ? 'var(--color-primary-light)'
-        : `conic-gradient(from -88deg, var(--color-primary) ${displayedScore}%, var(--color-primary-light) ${displayedScore}% 100%)`,
+        ? scoreTrackColor
+        : `conic-gradient(from -88deg, var(--color-primary) ${displayedScore}%, ${scoreTrackColor} ${displayedScore}% 100%)`,
   }
 
   const chartData = useMemo(() => {
@@ -343,6 +423,36 @@ export default function PregnancyDashboardPage() {
         value,
       }))
   }, [latestRecord])
+
+  const historySummaryCards = [
+    {
+      label: 'Latest Score',
+      value: latestRiskPercent === null ? 'No data yet' : `${latestRiskPercent}%`,
+    },
+    {
+      label: 'Recent Systolic',
+      value: latestRecord ? `${latestRecord.systolic_bp} mmHg` : 'No data yet',
+    },
+    {
+      label: 'Current Stage',
+      value: trimester || 'Trimester unavailable',
+    },
+  ]
+
+  const historyHighlights = [
+    {
+      label: 'Days logged',
+      value: `${chartData.length}/7`,
+    },
+    {
+      label: 'Current outlook',
+      value: riskTone === null ? 'Waiting for data' : riskTone === 'high' ? 'Needs attention' : 'Looking steady',
+    },
+    {
+      label: 'Recent blood pressure',
+      value: latestRecord ? `${latestRecord.systolic_bp}/${latestRecord.diastolic} mmHg` : 'Not logged yet',
+    },
+  ]
 
   const flagCards = [
     {
@@ -464,19 +574,22 @@ export default function PregnancyDashboardPage() {
                 <section className="inf-section">
                   <h3 className="inf-section-title">Required Vitals</h3>
                   <div className="inf-grid-2">
-                    {[
-                      ['age', 'Age (years)', '28'],
-                      ['systolic_bp', 'Systolic BP (mmHg)', '120'],
-                      ['diastolic', 'Diastolic BP (mmHg)', '80'],
-                      ['gestational_age_weeks', 'Gestational Age (weeks)', '28'],
-                    ].map(([key, label, placeholder]) => (
-                      <label key={key} className="inf-field">
-                        <span className="inf-label">{label}</span>
+                    {requiredVitalFields.map((field) => (
+                      <label key={field.key} className="inf-field">
+                        <span className="inf-label">
+                          <FormFieldInfo
+                            label={field.label}
+                            description={field.description}
+                            textClassName="inf-label"
+                          />
+                        </span>
                         <input
                           type="number"
-                          value={formValues[key as keyof PregnancyFormValues]}
-                          onChange={(event) => setFormValues((previous) => ({ ...previous, [key]: event.target.value }))}
-                          placeholder={placeholder}
+                          value={formValues[field.key as keyof PregnancyFormValues]}
+                          onChange={(event) =>
+                            setFormValues((previous) => ({ ...previous, [field.key]: event.target.value }))
+                          }
+                          placeholder={field.placeholder}
                           className="inf-input"
                         />
                       </label>
@@ -490,19 +603,22 @@ export default function PregnancyDashboardPage() {
                 <section className="inf-section">
                   <h3 className="inf-section-title">Optional Clinical Inputs</h3>
                   <div className="inf-grid-2">
-                    {[
-                      ['bs', 'Blood Sugar (bs)', '6.1'],
-                      ['body_temp', 'Body Temp (F)', '98.6'],
-                      ['bmi', 'BMI', '24.2'],
-                      ['heart_rate', 'Heart Rate', '78'],
-                    ].map(([key, label, placeholder]) => (
-                      <label key={key} className="inf-field">
-                        <span className="inf-label">{label}</span>
+                    {optionalClinicalFields.map((field) => (
+                      <label key={field.key} className="inf-field">
+                        <span className="inf-label">
+                          <FormFieldInfo
+                            label={field.label}
+                            description={field.description}
+                            textClassName="inf-label"
+                          />
+                        </span>
                         <input
                           type="number"
-                          value={formValues[key as keyof PregnancyFormValues]}
-                          onChange={(event) => setFormValues((previous) => ({ ...previous, [key]: event.target.value }))}
-                          placeholder={placeholder}
+                          value={formValues[field.key as keyof PregnancyFormValues]}
+                          onChange={(event) =>
+                            setFormValues((previous) => ({ ...previous, [field.key]: event.target.value }))
+                          }
+                          placeholder={field.placeholder}
                           className="inf-input"
                         />
                       </label>
@@ -513,28 +629,29 @@ export default function PregnancyDashboardPage() {
                 <section className="inf-section">
                   <h3 className="inf-section-title">Clinical Indicators</h3>
                   <div className="inf-toggle-list">
-                    {[
-                      ['previous_complications', 'Previous complications'],
-                      ['preexisting_diabetes', 'Preexisting diabetes'],
-                      ['gestational_diabetes', 'Gestational diabetes'],
-                      ['mental_health', 'Mental health concerns'],
-                    ].map(([key, label]) => {
-                      const selected = formValues[key as keyof PregnancyFormValues] as '' | '0' | '1'
+                    {pregnancyIndicatorFields.map((field) => {
+                      const selected = formValues[field.key as keyof PregnancyFormValues] as '' | '0' | '1'
                       return (
-                        <div className="inf-toggle-row" key={key}>
-                          <p className="inf-toggle-title">{label}</p>
+                        <div className="inf-toggle-row" key={field.key}>
+                          <p className="inf-toggle-title">
+                            <FormFieldInfo
+                              label={field.label}
+                              description={field.description}
+                              textClassName="inf-toggle-title"
+                            />
+                          </p>
                           <div className="inf-option-group">
                             <button
                               type="button"
                               className={`inf-chip ${selected === '0' ? 'active' : ''}`}
-                              onClick={() => setFormValues((previous) => ({ ...previous, [key]: '0' }))}
+                              onClick={() => setFormValues((previous) => ({ ...previous, [field.key]: '0' }))}
                             >
                               No
                             </button>
                             <button
                               type="button"
                               className={`inf-chip ${selected === '1' ? 'active' : ''}`}
-                              onClick={() => setFormValues((previous) => ({ ...previous, [key]: '1' }))}
+                              onClick={() => setFormValues((previous) => ({ ...previous, [field.key]: '1' }))}
                             >
                               Yes
                             </button>
@@ -549,7 +666,13 @@ export default function PregnancyDashboardPage() {
                   <h3 className="inf-section-title">Follow-up Metadata</h3>
                   <div className="inf-grid-2">
                     <label className="inf-field">
-                      <span className="inf-label">Visit Label</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Visit Label"
+                          description={pregnancyMetadataDescriptions.visit_label}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <input
                         value={formValues.visit_label}
                         onChange={(event) => setFormValues((previous) => ({ ...previous, visit_label: event.target.value }))}
@@ -558,7 +681,13 @@ export default function PregnancyDashboardPage() {
                       />
                     </label>
                     <label className="inf-field">
-                      <span className="inf-label">Notes</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Notes"
+                          description={pregnancyMetadataDescriptions.notes}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <input
                         value={formValues.notes}
                         onChange={(event) => setFormValues((previous) => ({ ...previous, notes: event.target.value }))}
@@ -607,7 +736,8 @@ export default function PregnancyDashboardPage() {
     <DashboardLayout title="Pregnancy Risk Monitor">
       <section className="preg-monitor-page">
         <div className="preg-monitor-top-row">
-          <div>
+          <div className="preg-monitor-top-intro">
+            <p className="preg-monitor-kicker">Pregnancy Risk Monitor</p>
             <h2 className="preg-monitor-week-title">Week {currentWeek ?? '--'}</h2>
             <p className="preg-monitor-week-meta">
               {`Record ${timeline?.total_records ?? 0} • ${trimester || 'Trimester unavailable'}`}
@@ -639,83 +769,128 @@ export default function PregnancyDashboardPage() {
         <div className="preg-monitor-grid">
           <div className="preg-monitor-main">
             <article className="preg-monitor-status-card">
-              <div className="preg-monitor-score-frame">
-                <div className="preg-monitor-score-ring" style={ringStyle}>
-                  <div className="preg-monitor-score-core">
-                    <p className="preg-monitor-score-value">{displayedScore === null ? '--' : displayedScore}</p>
-                    <p className="preg-monitor-score-label">SCORE</p>
+              <div className="preg-monitor-status-top">
+                <div className="preg-monitor-score-panel">
+                  <div className="preg-monitor-score-frame">
+                    <div className="preg-monitor-score-ring" style={ringStyle}>
+                      <div className="preg-monitor-score-core">
+                        <p className="preg-monitor-score-value">{displayedScore === null ? '--' : displayedScore}</p>
+                        <p className="preg-monitor-score-label">SCORE</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="preg-monitor-score-summary">
+                    <span>Latest check-in</span>
+                    <strong>{latestRiskPercent === null ? 'No data yet' : `${latestRiskPercent}% score`}</strong>
+                  </div>
+                </div>
+
+                <div className="preg-monitor-status-content">
+                  <p className="preg-monitor-status-kicker">Today&apos;s overview</p>
+                  <div className="preg-monitor-status-head">
+                    <h3 className="preg-monitor-status-title">
+                      {riskTone === null ? 'No records yet' : riskTone === 'high' ? 'Needs closer monitoring' : 'Stable health status'}
+                    </h3>
+                    <span
+                      className={`preg-monitor-risk-pill ${
+                        riskTone === null ? 'risk-none' : riskTone === 'high' ? 'risk-high' : 'risk-low'
+                      }`}
+                    >
+                      {riskTone === null ? 'No Data' : riskTone === 'high' ? 'High Risk' : 'Low Risk'}
+                    </span>
+                  </div>
+                  <p className="preg-monitor-status-text">
+                    {latestRecord
+                      ? latestRecord.hospital_advice
+                      : 'No records yet. Log daily vitals to populate this dashboard with personalized guidance.'}
+                  </p>
+
+                  <div className="preg-monitor-status-mini-grid">
+                    <article className="preg-monitor-status-mini-card">
+                      <span>Current Stage</span>
+                      <strong>{trimester || 'Not available'}</strong>
+                    </article>
+                    <article className="preg-monitor-status-mini-card">
+                      <span>Latest Visit</span>
+                      <strong>{latestRecord?.visit_label || 'No visit label yet'}</strong>
+                    </article>
+                    <article className="preg-monitor-status-mini-card">
+                      <span>Trend</span>
+                      <strong>{comparison?.trend || timeline?.trend || 'Not enough records'}</strong>
+                    </article>
                   </div>
                 </div>
               </div>
 
-              <div className="preg-monitor-status-content">
-                <div className="preg-monitor-status-head">
-                  <h3 className="preg-monitor-status-title">
-                    {riskTone === null ? 'No records yet' : riskTone === 'high' ? 'Needs closer monitoring' : 'Stable health status'}
-                  </h3>
-                  <span
-                    className={`preg-monitor-risk-pill ${
-                      riskTone === null ? 'risk-none' : riskTone === 'high' ? 'risk-high' : 'risk-low'
-                    }`}
-                  >
-                    {riskTone === null ? 'No Data' : riskTone === 'high' ? 'High Risk' : 'Low Risk'}
-                  </span>
+              <div className="preg-monitor-risk-row">
+                <div className="preg-monitor-risk-labels">
+                  <span>Key Factors Influencing Current Score</span>
+                  <strong>{latestRiskPercent === null ? '--' : `${latestRiskPercent}%`}</strong>
                 </div>
-                <p className="preg-monitor-status-text">
-                  {latestRecord
-                    ? latestRecord.hospital_advice
-                    : 'No records yet. Log daily vitals to populate this dashboard with personalized guidance.'}
-                </p>
-
-                <div className="preg-monitor-risk-row">
-                  <div className="preg-monitor-risk-labels">
-                    <span>Key Factors Influencing Current Score</span>
-                    <strong>{latestRiskPercent === null ? '--' : `${latestRiskPercent}%`}</strong>
-                  </div>
-                  {topCurrentFactors.length > 0 ? (
-                    <ul className="preg-monitor-factor-list">
-                      {topCurrentFactors.map((factor) => (
-                        <li key={factor.name} className="preg-monitor-factor-item">
-                          <span>{factor.name}</span>
-                          <strong>{factor.value.toFixed(3)}</strong>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="preg-monitor-risk-note">No factor breakdown available yet.</p>
-                  )}
-                  {latestRiskPercent === null ? null : (
-                    <p className="preg-monitor-risk-note">
-                      Threshold {riskThresholdPercent}% • Trend {comparison?.trend || timeline?.trend || 'not enough records'}
-                    </p>
-                  )}
-                </div>
+                {topCurrentFactors.length > 0 ? (
+                  <ul className="preg-monitor-factor-list">
+                    {topCurrentFactors.map((factor) => (
+                      <li key={factor.name} className="preg-monitor-factor-item">
+                        <span>{factor.name}</span>
+                        <strong>{factor.value.toFixed(3)}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="preg-monitor-risk-note">No factor breakdown available yet.</p>
+                )}
+                {latestRiskPercent === null ? null : (
+                  <p className="preg-monitor-risk-note">
+                    Threshold {riskThresholdPercent}% • Trend {comparison?.trend || timeline?.trend || 'not enough records'}
+                  </p>
+                )}
               </div>
             </article>
 
             <article className="preg-monitor-history-card">
               <div className="preg-monitor-card-head">
-                <h3>Symptom & Vitals History</h3>
+                <div>
+                  <h3>Symptom & Vitals History</h3>
+                  <p className="preg-monitor-card-subtitle">A quick look at recent risk and systolic blood pressure changes.</p>
+                </div>
                 <div className="preg-monitor-pill-row">
                   <span className="preg-monitor-pill active">7 Days</span>
                   <span className="preg-monitor-pill">30 Days</span>
                 </div>
               </div>
 
+              <div className="preg-monitor-history-highlights">
+                {historyHighlights.map((item) => (
+                  <article key={item.label} className="preg-monitor-history-highlight">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </article>
+                ))}
+              </div>
+
               {chartData.length > 0 ? (
-                <div className="preg-monitor-chart">
-                  {chartData.map((item) => (
-                    <div key={item.key} className="preg-monitor-chart-col">
-                      <div className="preg-monitor-chart-bars">
-                        <span className="preg-monitor-bar risk" style={{ height: `${item.riskHeight}px` }} />
-                        <span className="preg-monitor-bar systolic" style={{ height: `${item.systolicHeight}px` }} />
+                <div className="preg-monitor-chart-shell">
+                  <div className="preg-monitor-chart-scale" aria-hidden="true">
+                    <span>100%</span>
+                    <span>50%</span>
+                    <span>0</span>
+                  </div>
+                  <div className="preg-monitor-chart">
+                    {chartData.map((item) => (
+                      <div key={item.key} className="preg-monitor-chart-col">
+                        <div className="preg-monitor-chart-bars">
+                          <span className="preg-monitor-bar risk" style={{ height: `${item.riskHeight}px` }} />
+                          <span className="preg-monitor-bar systolic" style={{ height: `${item.systolicHeight}px` }} />
+                        </div>
+                        <span className="preg-monitor-chart-label">{item.label}</span>
                       </div>
-                      <span className="preg-monitor-chart-label">{item.label}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <div className="preg-monitor-chart preg-monitor-chart-empty">No history records yet.</div>
+                <div className="preg-monitor-chart-shell">
+                  <div className="preg-monitor-chart preg-monitor-chart-empty">No history records yet.</div>
+                </div>
               )}
 
               <div className="preg-monitor-legend">
@@ -727,6 +902,14 @@ export default function PregnancyDashboardPage() {
                   <i className="dot systolic" />
                   Systolic trend
                 </span>
+              </div>
+              <div className="preg-monitor-history-footer">
+                {historySummaryCards.map((card) => (
+                  <article key={card.label} className="preg-monitor-history-stat">
+                    <span>{card.label}</span>
+                    <strong>{card.value}</strong>
+                  </article>
+                ))}
               </div>
               {chartData.length === 0 ? (
                 <p className="preg-monitor-placeholder-note">Chart will appear after first saved follow-up.</p>
@@ -761,7 +944,11 @@ export default function PregnancyDashboardPage() {
               <p className="preg-checkin-subtitle">Log current vitals for follow-up risk assessment.</p>
 
               <label className="preg-checkin-field">
-                <span>Age (years)</span>
+                <FormFieldInfo
+                  label="Age (years)"
+                  description="Current age in years."
+                  textClassName="preg-checkin-field-label"
+                />
                 <input
                   type="number"
                   value={formValues.age}
@@ -772,7 +959,11 @@ export default function PregnancyDashboardPage() {
               </label>
 
               <label className="preg-checkin-field">
-                <span>Blood Pressure (mmHg)</span>
+                <FormFieldInfo
+                  label="Blood Pressure (mmHg)"
+                  description="Blood pressure combines systolic and diastolic values to help detect hypertension risk in pregnancy."
+                  textClassName="preg-checkin-field-label"
+                />
                 <div className="preg-checkin-bp-row">
                   <input
                     type="number"
@@ -793,7 +984,11 @@ export default function PregnancyDashboardPage() {
               </label>
 
               <label className="preg-checkin-field">
-                <span>BMI (optional)</span>
+                <FormFieldInfo
+                  label="BMI (optional)"
+                  description="Body Mass Index is optional here and helps give more context about maternal weight status."
+                  textClassName="preg-checkin-field-label"
+                />
                 <input
                   type="number"
                   value={formValues.bmi}
@@ -804,25 +999,24 @@ export default function PregnancyDashboardPage() {
               </label>
 
               <div className="preg-checkin-checkboxes">
-                <p>Clinical Indicators</p>
-                {[
-                  ['previous_complications', 'Previous complications'],
-                  ['preexisting_diabetes', 'Preexisting diabetes'],
-                  ['gestational_diabetes', 'Gestational diabetes'],
-                  ['mental_health', 'Mental health concerns'],
-                ].map(([key, label]) => (
-                  <label key={key} className="preg-checkin-checkbox-row">
+                <p className="preg-checkin-checkbox-title">Clinical Indicators</p>
+                {pregnancyIndicatorFields.map((field) => (
+                  <label key={field.key} className="preg-checkin-checkbox-row">
                     <input
                       type="checkbox"
-                      checked={formValues[key as keyof PregnancyFormValues] === '1'}
+                      checked={formValues[field.key as keyof PregnancyFormValues] === '1'}
                       onChange={(event) =>
                         setFormValues((previous) => ({
                           ...previous,
-                          [key]: event.target.checked ? '1' : '',
+                          [field.key]: event.target.checked ? '1' : '',
                         }))
                       }
                     />
-                    <span>{label}</span>
+                    <FormFieldInfo
+                      label={field.label}
+                      description={field.description}
+                      textClassName="preg-checkin-field-label"
+                    />
                   </label>
                 ))}
               </div>
@@ -831,26 +1025,37 @@ export default function PregnancyDashboardPage() {
                 <summary>Advanced Inputs</summary>
                 <div className="preg-checkin-advanced-grid">
                   {[
-                    ['bs', 'Blood Sugar', '6.1'],
-                    ['body_temp', 'Body Temp (F)', '98.6'],
-                    ['heart_rate', 'Heart Rate', '78'],
-                    ['gestational_age_weeks', 'Gestational Week', '28'],
-                  ].map(([key, label, placeholder]) => (
-                    <label key={key} className="preg-checkin-field">
-                      <span>{label}</span>
+                    ...optionalClinicalFields,
+                    {
+                      key: 'gestational_age_weeks',
+                      label: 'Gestational Week',
+                      placeholder: '28',
+                      description: 'The current pregnancy week at the time of this follow-up.',
+                    },
+                  ].map((field) => (
+                    <label key={field.key} className="preg-checkin-field">
+                      <FormFieldInfo
+                        label={field.label}
+                        description={field.description}
+                        textClassName="preg-checkin-field-label"
+                      />
                       <input
                         type="number"
-                        value={formValues[key as keyof PregnancyFormValues]}
+                        value={formValues[field.key as keyof PregnancyFormValues]}
                         onChange={(event) =>
-                          setFormValues((previous) => ({ ...previous, [key]: event.target.value }))
+                          setFormValues((previous) => ({ ...previous, [field.key]: event.target.value }))
                         }
-                        placeholder={placeholder}
+                        placeholder={field.placeholder}
                         className="preg-checkin-input"
                       />
                     </label>
                   ))}
                   <label className="preg-checkin-field">
-                    <span>Visit Label</span>
+                    <FormFieldInfo
+                      label="Visit Label"
+                      description={pregnancyMetadataDescriptions.visit_label}
+                      textClassName="preg-checkin-field-label"
+                    />
                     <input
                       value={formValues.visit_label}
                       onChange={(event) => setFormValues((previous) => ({ ...previous, visit_label: event.target.value }))}
@@ -859,7 +1064,11 @@ export default function PregnancyDashboardPage() {
                     />
                   </label>
                   <label className="preg-checkin-field">
-                    <span>Notes</span>
+                    <FormFieldInfo
+                      label="Notes"
+                      description={pregnancyMetadataDescriptions.notes}
+                      textClassName="preg-checkin-field-label"
+                    />
                     <textarea
                       value={formValues.notes}
                       onChange={(event) => setFormValues((previous) => ({ ...previous, notes: event.target.value }))}

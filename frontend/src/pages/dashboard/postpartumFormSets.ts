@@ -2,6 +2,7 @@ import {
   binaryFieldDefs,
   coreBinaryKeys,
   coreEpdsKeys,
+  epdsDescriptionsByField,
   epdsLabelsByField,
   epdsOptionsByField,
   initialPostpartumFormValues,
@@ -11,6 +12,7 @@ import {
 
 export {
   epdsLabelsByField,
+  epdsDescriptionsByField,
   epdsOptionsByField,
   initialPostpartumFormValues,
   yesNoOptions,

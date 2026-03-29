@@ -112,8 +112,8 @@ export default function SignInPage() {
           </p>
 
           <div className="auth-meta">
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
+            <Link className="auth-meta-link" to="/privacy-policy">Privacy Policy</Link>
+            <Link className="auth-meta-link" to="/terms-of-service">Terms of Service</Link>
             <span className="auth-meta-lock">
               <Lock size={12} strokeWidth={2} aria-hidden />
               256-bit SSL Encrypted

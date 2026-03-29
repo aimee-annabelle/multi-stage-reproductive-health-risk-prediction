@@ -111,7 +111,9 @@ export default function SignUpPage() {
             <div className="auth-agreement">
               <Shield size={18} strokeWidth={1.8} aria-hidden />
               <p>
-                I agree to the <strong>Terms of Service</strong> and acknowledge that my data will be encrypted according to <strong>HIPAA Standards</strong>
+                I agree to the <Link className="auth-link" to="/terms-of-service">Terms of Service</Link> and acknowledge
+                that my data will be handled as described in the{' '}
+                <Link className="auth-link" to="/privacy-policy">Privacy Policy</Link>.
               </p>
             </div>
 
@@ -127,8 +129,8 @@ export default function SignUpPage() {
           </p>
 
           <div className="auth-meta">
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
+            <Link className="auth-meta-link" to="/privacy-policy">Privacy Policy</Link>
+            <Link className="auth-meta-link" to="/terms-of-service">Terms of Service</Link>
             <span className="auth-meta-lock">
               <Lock size={12} strokeWidth={2} aria-hidden />
               256-bit SSL Encrypted

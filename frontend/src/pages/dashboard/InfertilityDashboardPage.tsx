@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import FormFieldInfo from '../../components/dashboard/FormFieldInfo'
 import {
-  getInfertilityModelInfo,
   predictInfertility,
   type InfertilityRequestPayload,
-  type InfertilityModelInfo,
   type InfertilityPredictionResponse,
 } from '../../services/predictionApi'
 import { SNAPSHOT_KEYS, writeStageSnapshot } from '../../utils/dashboardSnapshot'
@@ -32,37 +31,117 @@ type NumericFieldDef = {
   key: keyof InfertilityFormValues
   label: string
   placeholder: string
+  description: string
 }
 
 type BinaryFieldDef = {
   key: keyof InfertilityFormValues
   label: string
   hint: string
+  description: string
 }
 
 const requiredFields: NumericFieldDef[] = [
-  { key: 'age', label: 'Age', placeholder: 'e.g., 28' },
-  { key: 'childrenEverBorn', label: 'Children Ever Born', placeholder: 'e.g., 0' },
+  {
+    key: 'age',
+    label: 'Age',
+    placeholder: 'e.g., 28',
+    description: 'Age in years.',
+  },
+  {
+    key: 'childrenEverBorn',
+    label: 'Children Ever Born',
+    placeholder: 'e.g., 0',
+    description: 'Total number of children previously delivered.',
+  },
 ]
 
 const historicalFields: NumericFieldDef[] = [
-  { key: 'bmi', label: 'BMI', placeholder: 'e.g., 24.5' },
-  { key: 'ageAtFirstMarriage', label: 'Age At First Marriage/Cohabitation', placeholder: 'e.g., 22' },
-  { key: 'monthsSinceFirstCohabitation', label: 'Months Since First Cohabitation', placeholder: 'e.g., 96' },
-  { key: 'monthsSinceLastSex', label: 'Months Since Last Sexual Intercourse', placeholder: 'e.g., 2' },
+  {
+    key: 'bmi',
+    label: 'BMI',
+    placeholder: 'e.g., 24.5',
+    description: 'Body Mass Index based on height and weight.',
+  },
+  {
+    key: 'ageAtFirstMarriage',
+    label: 'Age At First Marriage/Cohabitation',
+    placeholder: 'e.g., 22',
+    description: 'Age at first marriage or long-term cohabitation.',
+  },
+  {
+    key: 'monthsSinceFirstCohabitation',
+    label: 'Months Since First Cohabitation',
+    placeholder: 'e.g., 96',
+    description: 'Number of months since first cohabitation.',
+  },
+  {
+    key: 'monthsSinceLastSex',
+    label: 'Months Since Last Sexual Intercourse',
+    placeholder: 'e.g., 2',
+    description: 'Number of months since last sexual intercourse.',
+  },
 ]
 
 const binaryFields: BinaryFieldDef[] = [
-  { key: 'irregularMenstrualCycles', label: 'Irregular Menstrual Cycles', hint: 'Cycle timing pattern over recent months' },
-  { key: 'chronicPelvicPain', label: 'Chronic Pelvic Pain', hint: 'Persistent pain reported for at least 3 months' },
-  { key: 'historyPelvicInfections', label: 'History of Pelvic Infections', hint: 'Prior diagnosis or treatment history' },
-  { key: 'hormonalSymptoms', label: 'Hormonal Symptoms', hint: 'Acne, hair growth changes, or endocrine symptoms' },
-  { key: 'earlyMenopauseSymptoms', label: 'Early Menopause Symptoms', hint: 'Hot flashes, cycle cessation, or ovarian decline signs' },
-  { key: 'autoimmuneHistory', label: 'Autoimmune History', hint: 'Known autoimmune condition affecting fertility context' },
-  { key: 'reproductiveSurgeryHistory', label: 'Reproductive Surgery History', hint: 'Prior gynecologic or reproductive procedures' },
-  { key: 'smokedLast12mo', label: 'Smoked in Last 12 Months', hint: 'Tobacco exposure in previous year' },
-  { key: 'alcoholLast12mo', label: 'Alcohol in Last 12 Months', hint: 'Regular alcohol intake within previous year' },
+  {
+    key: 'irregularMenstrualCycles',
+    label: 'Irregular Menstrual Cycles',
+    hint: 'Cycle timing pattern over recent months',
+    description: 'Whether menstrual cycles are irregular.',
+  },
+  {
+    key: 'chronicPelvicPain',
+    label: 'Chronic Pelvic Pain',
+    hint: 'Persistent pain reported for at least 3 months',
+    description: 'Pelvic pain lasting at least several months.',
+  },
+  {
+    key: 'historyPelvicInfections',
+    label: 'History of Pelvic Infections',
+    hint: 'Prior diagnosis or treatment history',
+    description: 'Whether there has been a past pelvic infection.',
+  },
+  {
+    key: 'hormonalSymptoms',
+    label: 'Hormonal Symptoms',
+    hint: 'Acne, hair growth changes, or endocrine symptoms',
+    description: 'Symptoms related to hormonal imbalance.',
+  },
+  {
+    key: 'earlyMenopauseSymptoms',
+    label: 'Early Menopause Symptoms',
+    hint: 'Hot flashes, cycle cessation, or ovarian decline signs',
+    description: 'Symptoms suggesting early menopause.',
+  },
+  {
+    key: 'autoimmuneHistory',
+    label: 'Autoimmune History',
+    hint: 'Known autoimmune condition affecting fertility context',
+    description: 'Whether there is a history of autoimmune disease.',
+  },
+  {
+    key: 'reproductiveSurgeryHistory',
+    label: 'Reproductive Surgery History',
+    hint: 'Prior gynecologic or reproductive procedures',
+    description: 'Whether there has been surgery involving reproductive organs.',
+  },
+  {
+    key: 'smokedLast12mo',
+    label: 'Smoked in Last 12 Months',
+    hint: 'Tobacco exposure in previous year',
+    description: 'Whether cigarettes or other tobacco products were used in the past 12 months.',
+  },
+  {
+    key: 'alcoholLast12mo',
+    label: 'Alcohol in Last 12 Months',
+    hint: 'Regular alcohol intake within previous year',
+    description: 'Whether alcohol was consumed during the previous 12 months.',
+  },
 ]
+
+const everCohabitedDescription =
+  'Whether there has ever been marriage or long-term cohabitation with a partner.'
 
 const initialForm: InfertilityFormValues = {
   age: '',
@@ -116,34 +195,10 @@ export default function InfertilityDashboardPage() {
   const [formValues, setFormValues] = useState<InfertilityFormValues>(initialForm)
   const [activeStep, setActiveStep] = useState<1 | 2>(1)
   const [result, setResult] = useState<InfertilityPredictionResponse | null>(null)
-  const [modelInfo, setModelInfo] = useState<InfertilityModelInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const hideHistoricalInputs = formValues.everCohabited === '0'
-
-  useEffect(() => {
-    let active = true
-
-    const loadModelInfo = async () => {
-      try {
-        const info = await getInfertilityModelInfo()
-        if (active) {
-          setModelInfo(info)
-        }
-      } catch {
-        if (active) {
-          setModelInfo(null)
-        }
-      }
-    }
-
-    void loadModelInfo()
-
-    return () => {
-      active = false
-    }
-  }, [])
 
   const topRiskFactors = useMemo(() => {
     if (!result) {
@@ -338,7 +393,7 @@ export default function InfertilityDashboardPage() {
             <div className="inf-card-header">
               <h2 className="inf-card-title">Risk Prediction Input</h2>
               <p className="inf-card-subtitle">
-                Enter required patient history and clinical observations. The payload will be mapped directly to backend infertility fields.
+                Enter required history and clinical observations. The payload maps directly to backend infertility fields.
               </p>
             </div>
 
@@ -349,7 +404,9 @@ export default function InfertilityDashboardPage() {
                   <div className="inf-grid-2">
                     {requiredFields.map((field) => (
                       <label key={field.key} className="inf-field">
-                        <span className="inf-label">{field.label}</span>
+                        <span className="inf-label">
+                          <FormFieldInfo label={field.label} description={field.description} textClassName="inf-label" />
+                        </span>
                         <input
                           type="number"
                           required
@@ -365,7 +422,13 @@ export default function InfertilityDashboardPage() {
                   </div>
 
                   <div className="inf-field inf-field-inline">
-                    <span className="inf-label">Ever Cohabited</span>
+                    <span className="inf-label">
+                      <FormFieldInfo
+                        label="Ever Cohabited"
+                        description={everCohabitedDescription}
+                        textClassName="inf-label"
+                      />
+                    </span>
                     <div className="inf-option-group">
                       <button
                         type="button"
@@ -391,7 +454,9 @@ export default function InfertilityDashboardPage() {
                     <div className="inf-grid-2">
                       {historicalFields.map((field) => (
                         <label key={field.key} className="inf-field">
-                          <span className="inf-label">{field.label}</span>
+                          <span className="inf-label">
+                            <FormFieldInfo label={field.label} description={field.description} textClassName="inf-label" />
+                          </span>
                           <input
                             type="number"
                             value={formValues[field.key]}
@@ -421,7 +486,13 @@ export default function InfertilityDashboardPage() {
                       return (
                         <div className="inf-toggle-row" key={field.key}>
                           <div>
-                            <p className="inf-toggle-title">{field.label}</p>
+                            <p className="inf-toggle-title">
+                              <FormFieldInfo
+                                label={field.label}
+                                description={field.description}
+                                textClassName="inf-toggle-title"
+                              />
+                            </p>
                             <p className="inf-toggle-hint">{field.hint}</p>
                           </div>
                           <div className="inf-option-group">
@@ -446,11 +517,6 @@ export default function InfertilityDashboardPage() {
                   </div>
                 </section>
 
-                {modelInfo?.thresholds?.fused !== undefined ? (
-                  <p className="inf-meta-line">
-                    Active fused threshold: {Math.round(modelInfo.thresholds.fused * 100)}% (model {modelInfo.model_version}).
-                  </p>
-                ) : null}
               </div>
             )}
 
@@ -550,13 +616,14 @@ export default function InfertilityDashboardPage() {
                 <div>
                   <h3 className="inf-summary-title">{resultSummary?.title || result.risk_level}</h3>
                   <p className="inf-summary-text">
-                    Current category: <strong>{result.predicted_class.replaceAll('_', ' ')}</strong>
+                    Current result: <strong>{result.risk_level}</strong>
                   </p>
                   <p className="inf-summary-text">{resultSummary?.explanation}</p>
                 </div>
               </article>
 
-              <article className="inf-info-card">
+              <article className={`inf-info-card inf-highlight-card inf-highlight-card-${riskTone}`}>
+                <p className="inf-highlight-kicker">System Recommendation</p>
                 <h4 className="inf-info-title">What These Prediction Results Mean</h4>
                 <p className="inf-summary-text">{resultSummary?.explanation}</p>
                 <p className="inf-summary-text">
@@ -570,6 +637,8 @@ export default function InfertilityDashboardPage() {
               </article>
 
               <section>
+                <div className={`inf-key-factor-shell inf-highlight-card inf-highlight-card-${riskTone}`}>
+                <p className="inf-highlight-kicker">Key Factors</p>
                 <h3 className="inf-section-heading">Key Contributing Factors</h3>
                 <div className="inf-factor-grid">
                   {topThreeFactors.length > 0 ? (
@@ -588,27 +657,14 @@ export default function InfertilityDashboardPage() {
                     <p className="inf-note-box">No factor attributions were returned for this run.</p>
                   )}
                 </div>
+                </div>
               </section>
 
             </div>
 
             <aside className="inf-result-side">
-              <article className="inf-action-card">
-                <h3 className="inf-section-heading">Probability Breakdown</h3>
-                <ul className="inf-list">
-                  <li>
-                    Overall infertility probability: <strong>{Math.round(result.probability_infertile * 100)}%</strong>
-                  </li>
-                  <li>
-                    Primary infertility probability: <strong>{Math.round(result.probability_primary * 100)}%</strong>
-                  </li>
-                  <li>
-                    Secondary infertility probability: <strong>{Math.round(result.probability_secondary * 100)}%</strong>
-                  </li>
-                </ul>
-              </article>
-
-              <article className="inf-action-card">
+              <article className={`inf-action-card inf-highlight-card inf-highlight-card-${riskTone}`}>
+                <p className="inf-highlight-kicker">Next Best Actions</p>
                 <h3 className="inf-section-heading">Quick Guidance</h3>
                 <ul className="inf-list">
                   <li>Share this result with your healthcare provider.</li>

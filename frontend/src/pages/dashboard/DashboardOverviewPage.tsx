@@ -219,6 +219,10 @@ export default function DashboardOverviewPage() {
 
   const rightTopMetrics = (
     <article className="overview-header-metrics overview-rail-metrics">
+      <div className="overview-rail-section-head">
+        <p className="overview-rail-eyebrow">Pregnancy Dashboard</p>
+        <h2 className="overview-rail-section-title">Pregnancy Records Summary</h2>
+      </div>
       <div className="overview-header-metrics-grid">
         <div className="overview-header-stat">
           <span className="overview-header-icon heart">
@@ -334,7 +338,11 @@ export default function DashboardOverviewPage() {
           const summary = stageSummaries[stage.key]
 
           return (
-            <Link key={stage.key} to={stage.route} className="overview-stage-card overview-stage-card-link">
+            <Link
+              key={stage.key}
+              to={stage.route}
+              className={`overview-stage-card overview-stage-card-link overview-stage-card-${stage.key}`}
+            >
               <div className="overview-stage-grid">
                 <img src={stage.image} alt={stage.label} className="overview-stage-image" />
 

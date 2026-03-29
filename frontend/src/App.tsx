@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import './App.css'
 import LandingPage from './pages/LandingPage'
+import LegalPage from './pages/LegalPage'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
 import { useAuthStore } from './stores/authStore'
@@ -30,6 +31,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/privacy-policy" element={<LegalPage focus="privacy" />} />
+      <Route path="/terms-of-service" element={<LegalPage focus="terms" />} />
 
       <Route element={<PublicOnlyRoute />}>
         <Route path="/sign-in" element={<SignInPage />} />

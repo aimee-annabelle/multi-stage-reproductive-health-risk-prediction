@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import FormFieldInfo from '../../components/dashboard/FormFieldInfo'
 import { ApiError } from '../../services/apiClient'
-import { getPostpartumModelInfo, type PostpartumModelInfo } from '../../services/predictionApi'
 import {
   assessPostpartumFollowUp,
   type PostpartumAssessmentRecordResponse,
@@ -15,6 +15,7 @@ import {
   buildPostpartumPayload,
   coreBinaryFields,
   coreEpdsKeys,
+  epdsDescriptionsByField,
   epdsLabelsByField,
   epdsOptionsByField,
   initialPostpartumFormValues,
@@ -22,43 +23,76 @@ import {
 } from './postpartumFormSets'
 type PostpartumSeverity = 'Low Risk' | 'Medium Risk' | 'High Risk'
 
+const postpartumFieldDescriptions: Record<string, string> = {
+  age_group: 'Age range at the time of assessment.',
+  baby_age_months: 'Baby age in completed months.',
+  kgs_gained_during_pregnancy: 'Kilograms gained during pregnancy.',
+  marital_status: 'Current relationship or marital status.',
+  household_income: 'Household income level.',
+  level_of_education: 'Highest completed education level.',
+  residency: 'Whether residence is in an urban or rural setting.',
+  access_to_healthcare_services: 'How healthcare services were accessed or paid for.',
+  comorbidities: 'Other medical conditions.',
+}
+
+const postpartumStepOneRequiredProfileFields = ['age_group', 'baby_age_months'] as const
+
 function getResultGuidance(severity: PostpartumSeverity) {
   if (severity === 'High Risk') {
     return {
-      title: 'Higher postpartum risk signal',
+      title: 'Care is needed soon',
       explanation:
-        'Your latest assessment indicates elevated risk. The tool recommends prompt follow-up with a qualified clinician or mental health professional.',
+        'Your answers suggest that extra support would be helpful right now. Reaching out early can make recovery easier.',
       steps: [
-        'Book a same-day or near-term clinical consultation.',
-        'Share the top risk factors and referral advice shown below.',
-        'Repeat assessment after support steps to track change over time.',
+        'Book care as soon as possible.',
+        'Share these results with a health professional or trusted support person.',
+        'Repeat the check-in after getting support to see how things are changing.',
       ],
     }
   }
 
   if (severity === 'Medium Risk') {
     return {
-      title: 'Moderate postpartum risk signal',
+      title: 'A gentle check-in is recommended',
       explanation:
-        'Your score is above the referral threshold but below the emergency threshold. Prompt same-day clinical follow-up is recommended.',
+        'Your answers show a few signs that deserve attention. A timely check-in can help you feel supported and safe.',
       steps: [
-        'Schedule a same-day or next-day clinical consultation.',
-        'Share the top risk factors and referral advice shown below.',
-        'Repeat assessment after support steps to track direction of change.',
+        'Arrange a check-in soon.',
+        'Talk through the highlighted concerns with someone you trust.',
+        'Repeat the assessment after a few support steps to track progress.',
       ],
     }
   }
 
   return {
-    title: 'Lower postpartum risk signal',
+    title: 'Things look more steady right now',
     explanation:
-      'Your current risk is below the referral threshold. Continue self-monitoring and repeat assessment whenever symptoms or stress levels change.',
+      'Your answers suggest things are more stable at the moment. Keep checking in with yourself and return if anything changes.',
     steps: [
-      'Maintain regular postpartum check-ins.',
-      'Track mood, sleep, and social support weekly.',
-      'Return for reassessment if warning symptoms increase.',
+      'Keep up regular check-ins.',
+      'Pay attention to mood, sleep, and support around you.',
+      'Come back for another check if warning signs increase.',
     ],
   }
+}
+
+function humanizeFactorName(value: string): string {
+  return value
+    .replaceAll('_', ' ')
+    .replace(/\[[^\]]+\]/g, '')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function getSeverityStrokeColor(tone: 'low' | 'medium' | 'high') {
+  if (tone === 'high') {
+    return 'var(--color-error)'
+  }
+  if (tone === 'medium') {
+    return 'var(--color-warning)'
+  }
+  return 'var(--color-success)'
 }
 
 export default function PostpartumPredictionPage() {
@@ -67,7 +101,6 @@ export default function PostpartumPredictionPage() {
 
   const [formValues, setFormValues] = useState<Record<string, string>>(initialPostpartumFormValues)
   const [activeStep, setActiveStep] = useState<1 | 2>(1)
-  const [modelInfo, setModelInfo] = useState<PostpartumModelInfo | null>(null)
 
   const [result, setResult] = useState<PostpartumAssessmentRecordResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -78,29 +111,6 @@ export default function PostpartumPredictionPage() {
     navigate('/sign-in')
   }, [logout, navigate])
 
-  useEffect(() => {
-    let active = true
-
-    const loadModel = async () => {
-      try {
-        const info = await getPostpartumModelInfo()
-        if (active) {
-          setModelInfo(info)
-        }
-      } catch {
-        if (active) {
-          setModelInfo(null)
-        }
-      }
-    }
-
-    void loadModel()
-
-    return () => {
-      active = false
-    }
-  }, [])
-
   const setValue = (field: string, value: string) => {
     setFormValues((previous) => ({ ...previous, [field]: value }))
   }
@@ -110,6 +120,38 @@ export default function PostpartumPredictionPage() {
     setError(null)
     setResult(null)
     setActiveStep(1)
+  }
+
+  const validateStepOne = () => {
+    const babyAgeMonths = Number(formValues.baby_age_months)
+
+    if (!formValues.age_group || !Number.isFinite(babyAgeMonths) || babyAgeMonths < 0) {
+      setError('Age group and baby age are required before moving to the next step.')
+      return false
+    }
+
+    const hasMissingCoreBinary = coreBinaryFields.some((field) => formValues[field.key] === '')
+    if (hasMissingCoreBinary) {
+      setError('Please answer all key indicator questions before moving to the next step.')
+      return false
+    }
+
+    const hasMissingCoreEpds = coreEpdsKeys.some((fieldKey) => !formValues[fieldKey])
+    if (hasMissingCoreEpds) {
+      setError('Please complete all core EPDS questions before moving to the next step.')
+      return false
+    }
+
+    setError(null)
+    return true
+  }
+
+  const continueToStepTwo = () => {
+    if (!validateStepOne()) {
+      return
+    }
+
+    setActiveStep(2)
   }
 
   const handleSubmit = async () => {
@@ -165,6 +207,9 @@ export default function PostpartumPredictionPage() {
       .slice(0, 5)
   }, [result])
 
+  const riskPercent = result ? Math.round(result.probability_high_risk * 100) : 0
+  const severityStrokeColor = getSeverityStrokeColor(resultSeverityTone)
+
   return (
     <DashboardLayout
       title="Postpartum Risk Prediction"
@@ -189,8 +234,7 @@ export default function PostpartumPredictionPage() {
               onSubmit={(event) => {
                 event.preventDefault()
                 if (activeStep === 1) {
-                  setError(null)
-                  setActiveStep(2)
+                  continueToStepTwo()
                   return
                 }
                 void handleSubmit()
@@ -209,11 +253,18 @@ export default function PostpartumPredictionPage() {
                     <h3 className="inf-section-title">Core Profile</h3>
                     <div className="inf-grid-2">
                       <label className="inf-field">
-                        <span className="inf-label">Age Group</span>
+                        <span className="inf-label">
+                          <FormFieldInfo
+                            label="Age Group"
+                            description={postpartumFieldDescriptions.age_group}
+                            textClassName="inf-label"
+                          />
+                        </span>
                         <select
                           value={formValues.age_group}
                           onChange={(event) => setValue('age_group', event.target.value)}
                           className="inf-input"
+                          required={postpartumStepOneRequiredProfileFields.includes('age_group')}
                         >
                           <option value="">Not provided</option>
                           <option value="Below 25">Below 25</option>
@@ -222,18 +273,31 @@ export default function PostpartumPredictionPage() {
                       </label>
 
                       <label className="inf-field">
-                        <span className="inf-label">Baby Age (months)</span>
+                        <span className="inf-label">
+                          <FormFieldInfo
+                            label="Baby Age (months)"
+                            description={postpartumFieldDescriptions.baby_age_months}
+                            textClassName="inf-label"
+                          />
+                        </span>
                         <input
                           type="number"
                           value={formValues.baby_age_months}
                           onChange={(event) => setValue('baby_age_months', event.target.value)}
                           placeholder="e.g., 3"
                           className="inf-input"
+                          required={postpartumStepOneRequiredProfileFields.includes('baby_age_months')}
                         />
                       </label>
 
                       <label className="inf-field">
-                        <span className="inf-label">Weight Gain During Pregnancy (kg)</span>
+                        <span className="inf-label">
+                          <FormFieldInfo
+                            label="Weight Gain During Pregnancy (kg)"
+                            description={postpartumFieldDescriptions.kgs_gained_during_pregnancy}
+                            textClassName="inf-label"
+                          />
+                        </span>
                         <input
                           type="number"
                           value={formValues.kgs_gained_during_pregnancy}
@@ -252,8 +316,14 @@ export default function PostpartumPredictionPage() {
                         const selected = formValues[field.key]
                         return (
                           <div className="inf-toggle-row" key={field.key}>
-                            <div>
-                              <p className="inf-toggle-title">{field.label}</p>
+                          <div>
+                              <p className="inf-toggle-title">
+                                <FormFieldInfo
+                                  label={field.label}
+                                  description={field.description}
+                                  textClassName="inf-toggle-title"
+                                />
+                              </p>
                               <p className="inf-toggle-hint">{field.hint}</p>
                             </div>
                             <div className="inf-option-group">
@@ -279,7 +349,13 @@ export default function PostpartumPredictionPage() {
                   <div className="inf-grid-2">
                     {coreEpdsKeys.map((fieldKey) => (
                       <label key={fieldKey} className="inf-field">
-                        <span className="inf-label">{epdsLabelsByField[fieldKey]}</span>
+                        <span className="inf-label">
+                          <FormFieldInfo
+                            label={epdsLabelsByField[fieldKey]}
+                            description={epdsDescriptionsByField[fieldKey]}
+                            textClassName="inf-label"
+                          />
+                        </span>
                         <select
                           value={formValues[fieldKey]}
                           onChange={(event) => setValue(fieldKey, event.target.value)}
@@ -303,7 +379,13 @@ export default function PostpartumPredictionPage() {
                   <h3 className="inf-section-title">Socio-demographic and Clinical Context</h3>
                   <div className="inf-grid-2">
                     <label className="inf-field">
-                      <span className="inf-label">Marital Status</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Marital Status"
+                          description={postpartumFieldDescriptions.marital_status}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <select
                         value={formValues.marital_status}
                         onChange={(event) => setValue('marital_status', event.target.value)}
@@ -317,7 +399,13 @@ export default function PostpartumPredictionPage() {
                     </label>
 
                     <label className="inf-field">
-                      <span className="inf-label">Household Income</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Household Income"
+                          description={postpartumFieldDescriptions.household_income}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <select
                         value={formValues.household_income}
                         onChange={(event) => setValue('household_income', event.target.value)}
@@ -331,7 +419,13 @@ export default function PostpartumPredictionPage() {
                     </label>
 
                     <label className="inf-field">
-                      <span className="inf-label">Level of Education</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Level of Education"
+                          description={postpartumFieldDescriptions.level_of_education}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <select
                         value={formValues.level_of_education}
                         onChange={(event) => setValue('level_of_education', event.target.value)}
@@ -345,7 +439,13 @@ export default function PostpartumPredictionPage() {
                     </label>
 
                     <label className="inf-field">
-                      <span className="inf-label">Residency</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Residency"
+                          description={postpartumFieldDescriptions.residency}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <select
                         value={formValues.residency}
                         onChange={(event) => setValue('residency', event.target.value)}
@@ -358,7 +458,13 @@ export default function PostpartumPredictionPage() {
                     </label>
 
                     <label className="inf-field">
-                      <span className="inf-label">Healthcare Access</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Healthcare Access"
+                          description={postpartumFieldDescriptions.access_to_healthcare_services}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <select
                         value={formValues.access_to_healthcare_services}
                         onChange={(event) => setValue('access_to_healthcare_services', event.target.value)}
@@ -376,7 +482,13 @@ export default function PostpartumPredictionPage() {
                     </label>
 
                     <label className="inf-field">
-                      <span className="inf-label">Comorbidities</span>
+                      <span className="inf-label">
+                        <FormFieldInfo
+                          label="Comorbidities"
+                          description={postpartumFieldDescriptions.comorbidities}
+                          textClassName="inf-label"
+                        />
+                      </span>
                       <input
                         value={formValues.comorbidities}
                         onChange={(event) => setValue('comorbidities', event.target.value)}
@@ -395,7 +507,13 @@ export default function PostpartumPredictionPage() {
                       return (
                         <div className="inf-toggle-row" key={field.key}>
                           <div>
-                            <p className="inf-toggle-title">{field.label}</p>
+                            <p className="inf-toggle-title">
+                              <FormFieldInfo
+                                label={field.label}
+                                description={field.description}
+                                textClassName="inf-toggle-title"
+                              />
+                            </p>
                             <p className="inf-toggle-hint">{field.hint}</p>
                           </div>
                           <div className="inf-option-group">
@@ -421,7 +539,13 @@ export default function PostpartumPredictionPage() {
                   <div className="inf-grid-2">
                     {advancedEpdsFields.map((fieldKey) => (
                       <label key={fieldKey} className="inf-field">
-                        <span className="inf-label">{epdsLabelsByField[fieldKey]}</span>
+                        <span className="inf-label">
+                          <FormFieldInfo
+                            label={epdsLabelsByField[fieldKey]}
+                            description={epdsDescriptionsByField[fieldKey]}
+                            textClassName="inf-label"
+                          />
+                        </span>
                         <select
                           value={formValues[fieldKey]}
                           onChange={(event) => setValue(fieldKey, event.target.value)}
@@ -510,80 +634,106 @@ export default function PostpartumPredictionPage() {
 
             <div className="inf-result-grid">
               <div className="inf-result-main">
-                <article className="inf-info-card">
-                  <h4 className="inf-info-title">Summary</h4>
-                  <ul className="inf-list">
-                    <li>
-                      Predicted class: <strong>{result.predicted_class.replaceAll('_', ' ')}</strong>
-                    </li>
-                    <li>
-                      High-risk probability: <strong>{Math.round(result.probability_high_risk * 100)}%</strong>
-                    </li>
-                    <li>
-                      Decision threshold: <strong>{Math.round(result.decision_threshold * 100)}%</strong>
-                    </li>
-                    <li>
-                      Classification mode: <strong>{result.classification_note}</strong>
-                    </li>
-                    <li>
-                      Input completion: <strong>{Math.round(result.input_completion_pct)}%</strong>
-                    </li>
-                  </ul>
+                <article className={`inf-summary-card inf-summary-card-${resultSeverityTone === 'medium' ? 'moderate-risk' : `${resultSeverityTone}-risk`}`}>
+                  <div className="inf-gauge-wrap">
+                    <svg viewBox="0 0 120 70" className="inf-gauge" aria-hidden>
+                      <path
+                        d="M10 60 A50 50 0 0 1 110 60"
+                        fill="none"
+                        stroke="var(--color-gray-200)"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M10 60 A50 50 0 0 1 110 60"
+                        fill="none"
+                        stroke={severityStrokeColor}
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(riskPercent / 100) * 157} 157`}
+                      />
+                    </svg>
+                    <div className="inf-gauge-value">
+                      <p className="inf-gauge-number">{riskPercent}%</p>
+                      <p className="inf-gauge-level">{resultSeverity?.toUpperCase()}</p>
+                    </div>
+                  </div>
+
+                    <div className="pp-result-summary-copy">
+                    <p className="inf-highlight-kicker">Your Check-In Result</p>
+                    <h3 className="inf-summary-title">{resultGuidance?.title || 'Your Postpartum Check-In'}</h3>
+                    <p className="inf-summary-text">
+                      Overall check-in: <strong>{resultSeverity}</strong>
+                    </p>
+                    <p className="inf-summary-text">{resultGuidance?.explanation}</p>
+
+                    <div className="pp-result-detail-list">
+                      <article className="pp-result-detail-row">
+                        <span>Risk level</span>
+                        <strong>{resultSeverity}</strong>
+                      </article>
+                      <article className="pp-result-detail-row">
+                        <span>What this suggests</span>
+                        <strong>{resultGuidance?.title}</strong>
+                      </article>
+                      <article className="pp-result-detail-row">
+                        <span>Best next step</span>
+                        <strong>{resultGuidance?.steps[0]}</strong>
+                      </article>
+                    </div>
+                  </div>
                 </article>
 
-                <article className="inf-info-card">
-                  <h4 className="inf-info-title">What this means</h4>
-                  <p className="inf-summary-text">{resultGuidance?.title}</p>
+                <article className={`inf-action-card inf-highlight-card inf-highlight-card-${resultSeverityTone}`}>
+                  <p className="inf-highlight-kicker">What Stood Out Most</p>
+                  <h3 className="inf-section-heading">Key Factors</h3>
+                  {topFactors.length > 0 ? (
+                    <div className="pp-factor-card-grid">
+                      {topFactors.map(([name, value], index) => (
+                        <article
+                          key={name}
+                          className={`inf-factor-card ${index === 0 ? 'inf-factor-card-warning' : 'inf-factor-card-positive'}`}
+                        >
+                          <p className="inf-factor-label">Top #{index + 1}</p>
+                          <p className="pp-factor-card-title">{humanizeFactorName(name)}</p>
+                          <p className="inf-factor-value">{value.toFixed(2)}</p>
+                          <p className="inf-factor-note">
+                            {index === 0 ? 'Most important signal in this check-in.' : 'Also contributed to this result.'}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="inf-summary-text">No factor details were returned.</p>
+                  )}
+                </article>
+              </div>
+
+              <aside className="inf-result-side">
+                <article className={`inf-info-card inf-highlight-card inf-highlight-card-${resultSeverityTone} pp-next-steps-card`}>
+                  <p className="inf-highlight-kicker">Recommended Next Steps</p>
+                  <h4 className="inf-info-title">What to do next</h4>
                   <p className="inf-summary-text">{resultGuidance?.explanation}</p>
-                  <ul className="inf-list">
+                  <ul className="inf-list pp-result-recommend-list">
                     {resultGuidance?.steps.map((step) => (
                       <li key={step}>{step}</li>
                     ))}
                   </ul>
                 </article>
 
-                <article className="inf-info-card">
-                  <h4 className="inf-info-title">Clinical Advice</h4>
-                  <ul className="inf-list">
-                    <li>
-                      Referral advice: <strong>{result.hospital_advice}</strong>
-                    </li>
-                    <li>
-                      Emergency advice: <strong>{result.emergency_advice}</strong>
-                    </li>
-                  </ul>
-                </article>
-              </div>
-
-              <aside className="inf-result-side">
-                <article className="inf-action-card">
-                  <h3 className="inf-section-heading">Top Factors</h3>
-                  {topFactors.length > 0 ? (
-                    <ul className="inf-list">
-                      {topFactors.map(([name, value]) => (
-                        <li key={name}>
-                          {name.replaceAll('_', ' ')}: <strong>{value.toFixed(3)}</strong>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="inf-summary-text">No factor details were returned.</p>
-                  )}
-                </article>
-
-                <article className="inf-action-card">
-                  <h3 className="inf-section-heading">Model Metadata</h3>
-                  <ul className="inf-list">
-                    <li>
-                      Response model version: <strong>{result.model_version}</strong>
-                    </li>
-                    <li>
-                      Config model version: <strong>{modelInfo?.model_version || 'N/A'}</strong>
-                    </li>
-                    <li>
-                      Emergency threshold: <strong>{Math.round(result.emergency_threshold * 100)}%</strong>
-                    </li>
-                  </ul>
+                <article className={`inf-info-card inf-highlight-card inf-highlight-card-${resultSeverityTone} pp-clinical-card`}>
+                  <p className="inf-highlight-kicker">Helpful Guidance</p>
+                  <h4 className="inf-info-title">Support to keep in mind</h4>
+                  <div className="pp-clinical-grid">
+                    <article className="pp-clinical-item">
+                      <span className="pp-clinical-label">Care suggestion</span>
+                      <p>{result.hospital_advice}</p>
+                    </article>
+                    <article className="pp-clinical-item">
+                      <span className="pp-clinical-label">Urgent support</span>
+                      <p>{result.emergency_advice}</p>
+                    </article>
+                  </div>
                 </article>
 
                 <button

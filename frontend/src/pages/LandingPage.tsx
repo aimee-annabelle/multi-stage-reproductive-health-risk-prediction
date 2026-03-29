@@ -13,7 +13,6 @@ type JourneyCard = {
   description: string
   image: string
   icon: 'spark' | 'heart' | 'smile'
-  accent: 'pink' | 'dark'
   tone?: 'warm' | 'mono'
 }
 
@@ -33,27 +32,24 @@ const journeyCards: JourneyCard[] = [
   {
     title: 'Infertility Insights',
     description:
-      'Track cycle nuances and hormonal patterns to identify potential conception barriers early.',
+      'Enter cycle and symptom information to receive an infertility risk estimate and a short explanation of the result.',
     image: labImage,
     icon: 'spark',
-    accent: 'pink',
     tone: 'warm',
   },
   {
     title: 'Pregnancy Monitoring',
     description:
-      'Real-time risk assessment for conditions like preeclampsia using simple vital inputs.',
+      'Log pregnancy follow-up vitals and indicators to view risk scores, trend summaries, and recent key factors.',
     image: pregnancyImage,
     icon: 'heart',
-    accent: 'dark',
   },
   {
     title: 'Postpartum Recovery',
     description:
-      'Support your physical and mental recovery with daily check-ins and mood tracking.',
+      'Complete postpartum check-ins to review recovery-related risk signals, guidance, and top contributing factors.',
     image: postpartumImage,
     icon: 'smile',
-    accent: 'pink',
     tone: 'mono',
   },
 ]
@@ -61,39 +57,39 @@ const journeyCards: JourneyCard[] = [
 const steps: Step[] = [
   {
     number: '01',
-    title: 'Input Your Vitals',
+    title: 'Enter Your Information',
     description:
-      'Log simple daily metrics like temperature, blood pressure, and symptoms in our secure dashboard.',
+      'Fill in the form for infertility, pregnancy, or postpartum using the inputs requested on each dashboard.',
   },
   {
     number: '02',
-    title: 'AI Analysis',
+    title: 'Run the Assessment',
     description:
-      'Our machine learning algorithms compare your data against clinical patterns to detect anomalies.',
+      'The system processes the information you enter and generates a stage-specific risk result.',
   },
   {
     number: '03',
-    title: 'Get Instant Results',
+    title: 'Review the Dashboard',
     description:
-      'Receive immediate risk scores and actionable recommendations to share with your doctor.',
+      'See the result, simple guidance, stored history, and highlighted factors that shaped the latest output.',
   },
 ]
 
 const securityCards: SecurityCard[] = [
   {
-    title: 'End-to-End Encryption',
-    description: 'Your data is encrypted in transit and at rest using AES-256 standards.',
+    title: 'Protected Access',
+    description: 'Accounts are accessed through authenticated sign-in and protected application routes.',
     icon: 'lock',
   },
   {
-    title: 'Private Cloud Storage',
-    description: 'Isolated databases ensure your records are never commingled or shared.',
+    title: 'Stored Records',
+    description: 'Saved assessments can be used to show recent history, follow-up trends, and dashboard summaries.',
     icon: 'database',
   },
   {
-    title: 'HIPAA Compliant',
+    title: 'Privacy Information',
     description:
-      'We strictly adhere to federal standards for protecting health information.',
+      'Privacy policy and terms pages explain how the platform is intended to be used and how records are handled.',
     icon: 'shield',
   },
 ]
@@ -184,23 +180,20 @@ export default function LandingPage() {
         <section className="hero" id="services">
           <div className="hero-copy">
             <p className="hero-badge">
-              <span aria-hidden>✧</span> AI-Powered Medical Insights
+              <span aria-hidden>✧</span> Reproductive Health Risk Tracking
             </p>
 
             <h1>
-              Accurate Health
+              Track Risk Signals Across
               <br />
-              Risk Prediction for
+              <span>Every Stage</span> of
               <br />
-              <span>Every Stage</span>
-              <br />
-              of Womanhood.
+              Reproductive Care.
             </h1>
 
             <p className="hero-text">
-              Empowering women with data-driven insights. Detect potential health risks early
-              during infertility, pregnancy, and postpartum recovery with our advanced ML
-              algorithms.
+              EveBloom helps you record infertility, pregnancy, and postpartum information,
+              generate stage-specific risk results, and review guidance and trends in one place.
             </p>
 
             <div className="hero-actions">
@@ -227,7 +220,7 @@ export default function LandingPage() {
               </span>
               <span>
                 <small>HEALTH STATUS</small>
-                <strong>Optimal Range</strong>
+                <strong>Recent Risk Summary</strong>
               </span>
             </div>
           </div>
@@ -237,8 +230,8 @@ export default function LandingPage() {
           <div className="section-head center">
             <h2>Comprehensive Care for Every Journey</h2>
             <p>
-              Our predictive models are specialized for three critical stages of reproductive
-              health, providing tailored insights when you need them most.
+              The platform is organized into three dashboards so each stage can collect the
+              right inputs and present the right type of result.
             </p>
           </div>
 
@@ -255,9 +248,6 @@ export default function LandingPage() {
 
                   <h3>{card.title}</h3>
                   <p>{card.description}</p>
-                  <a className={`learn-link ${card.accent}`} href="#">
-                    Learn more <span aria-hidden>→</span>
-                  </a>
                 </div>
               </article>
             ))}
@@ -268,8 +258,8 @@ export default function LandingPage() {
           <div className="engine-left">
             <h2>How Our Prediction Engine Works</h2>
             <p>
-              We combine your personal health data with millions of clinical data points to
-              provide accurate, personalized risk assessments.
+              Each stage uses its own input flow and stored records to generate a focused
+              result and supporting dashboard view.
             </p>
 
             <div className="steps-list">
@@ -300,8 +290,8 @@ export default function LandingPage() {
                   </svg>
                 </span>
                 <div>
-                  <h3>Neural Network Analysis</h3>
-                  <p>Processing 50+ biomarkers</p>
+                  <h3>Prediction Workflow</h3>
+                  <p>Inputs, result, and dashboard summary</p>
                 </div>
               </div>
 
@@ -312,8 +302,8 @@ export default function LandingPage() {
               </div>
 
               <div className="accuracy-row">
-                <p>Prediction Accuracy</p>
-                <strong>99.2%</strong>
+                <p>Latest Output</p>
+                <strong>Risk Summary</strong>
               </div>
             </div>
           </div>
@@ -325,10 +315,10 @@ export default function LandingPage() {
             <span className="security-icon" aria-hidden>
               <Icon name="shield" />
             </span>
-            <h2>Bank-Grade Data Security</h2>
+            <h2>Data and Access</h2>
             <p>
-              Your health data is sensitive. We treat it that way. Fully HIPAA compliant and
-              end-to-end encrypted.
+              EveBloom stores assessments to support dashboards, follow-up tracking, and legal
+              information pages for users before and after sign-in.
             </p>
 
             <div className="security-grid">
@@ -348,11 +338,11 @@ export default function LandingPage() {
         <section className="final-cta">
           <h2>Ready to Take Control of Your Health Journey?</h2>
           <p>
-            Join thousands of women who are making informed decisions about their reproductive
-            health today.
+            Create an account to start using the infertility, pregnancy, and postpartum tools
+            from one dashboard.
           </p>
           <Link to="/sign-up" className="button button-primary">
-            Get Started for Free
+            Create an Account
           </Link>
         </section>
       </main>

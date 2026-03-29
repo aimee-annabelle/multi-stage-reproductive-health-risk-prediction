@@ -46,39 +46,126 @@ export const epdsLabelsByField: Record<string, string> = {
   epds_thought_of_harming_self: 'Thought of harming self',
 }
 
-export const binaryFieldDefs: Array<{ key: keyof PostpartumRequestPayload; label: string; hint: string }> = [
-  { key: 'smoke_cigarettes', label: 'Smoke cigarettes', hint: 'Current or recent cigarette smoking' },
-  { key: 'smoke_shisha', label: 'Smoke shisha', hint: 'Current or recent shisha use' },
-  { key: 'premature_labour', label: 'Premature labour', hint: 'History of labor before full term' },
-  { key: 'healthy_baby', label: 'Healthy baby', hint: 'Overall healthy newborn status' },
-  { key: 'baby_admitted_nicu', label: 'Baby admitted in NICU', hint: 'Neonatal intensive care admission' },
+export const epdsDescriptionsByField: Record<string, string> = {
+  epds_laugh_and_funny_side: 'Ability to laugh and see the funny side.',
+  epds_looked_forward_enjoyment: 'Looking forward to enjoyment.',
+  epds_blamed_myself: 'Blaming yourself unnecessarily.',
+  epds_anxious_or_worried: 'Feeling anxious or worried.',
+  epds_scared_or_panicky: 'Feeling scared or panicky.',
+  epds_things_getting_on_top: 'Feeling that things are getting on top of you.',
+  epds_unhappy_difficulty_sleeping: 'Being unhappy and having difficulty sleeping.',
+  epds_sad_or_miserable: 'Feeling sad or miserable.',
+  epds_unhappy_crying: 'Being unhappy and crying.',
+  epds_thought_of_harming_self: 'Thoughts of self-harm.',
+}
+
+export const binaryFieldDefs: Array<{
+  key: keyof PostpartumRequestPayload
+  label: string
+  hint: string
+  description: string
+}> = [
+  {
+    key: 'smoke_cigarettes',
+    label: 'Smoke cigarettes',
+    hint: 'Current or recent cigarette smoking',
+    description: 'Whether cigarettes are smoked.',
+  },
+  {
+    key: 'smoke_shisha',
+    label: 'Smoke shisha',
+    hint: 'Current or recent shisha use',
+    description: 'Whether shisha or hookah is used.',
+  },
+  {
+    key: 'premature_labour',
+    label: 'Premature labour',
+    hint: 'History of labor before full term',
+    description: 'Whether labor started before full term.',
+  },
+  {
+    key: 'healthy_baby',
+    label: 'Healthy baby',
+    hint: 'Overall healthy newborn status',
+    description: 'Whether the baby is healthy.',
+  },
+  {
+    key: 'baby_admitted_nicu',
+    label: 'Baby admitted in NICU',
+    hint: 'Neonatal intensive care admission',
+    description: 'Whether the baby was admitted to NICU.',
+  },
   {
     key: 'baby_feeding_difficulties',
     label: 'Baby feeding difficulties',
     hint: 'Trouble breastfeeding or bottle feeding',
+    description: 'Whether there have been feeding difficulties.',
   },
-  { key: 'pregnancy_problem', label: 'Pregnancy problems', hint: 'Complications experienced during pregnancy' },
-  { key: 'postnatal_problems', label: 'Postnatal problems', hint: 'Any postpartum clinical or emotional issues' },
-  { key: 'natal_problems', label: 'Natal problems', hint: 'Complications during birth' },
-  { key: 'problems_with_husband', label: 'Problems with husband', hint: 'Relationship stress in partner context' },
-  { key: 'financial_problems', label: 'Financial problems', hint: 'Current financial stress indicators' },
-  { key: 'family_problems', label: 'Family problems', hint: 'Family conflict or low family support' },
-  { key: 'had_covid_19', label: 'Had COVID-19', hint: 'Confirmed COVID-19 history' },
-  { key: 'had_covid_19_vaccine', label: 'Had COVID-19 vaccine', hint: 'COVID-19 vaccination status' },
+  {
+    key: 'pregnancy_problem',
+    label: 'Pregnancy problems',
+    hint: 'Complications experienced during pregnancy',
+    description: 'Whether there were problems during pregnancy.',
+  },
+  {
+    key: 'postnatal_problems',
+    label: 'Postnatal problems',
+    hint: 'Any postpartum clinical or emotional issues',
+    description: 'Whether there have been problems after delivery.',
+  },
+  {
+    key: 'natal_problems',
+    label: 'Natal problems',
+    hint: 'Complications during birth',
+    description: 'Whether there were problems during birth.',
+  },
+  {
+    key: 'problems_with_husband',
+    label: 'Problems with husband',
+    hint: 'Relationship stress in partner context',
+    description: 'Whether there are problems with a partner.',
+  },
+  {
+    key: 'financial_problems',
+    label: 'Financial problems',
+    hint: 'Current financial stress indicators',
+    description: 'Whether there are financial problems.',
+  },
+  {
+    key: 'family_problems',
+    label: 'Family problems',
+    hint: 'Family conflict or low family support',
+    description: 'Whether there are family problems.',
+  },
+  {
+    key: 'had_covid_19',
+    label: 'Had COVID-19',
+    hint: 'Confirmed COVID-19 history',
+    description: 'Whether there has been COVID-19 infection.',
+  },
+  {
+    key: 'had_covid_19_vaccine',
+    label: 'Had COVID-19 vaccine',
+    hint: 'COVID-19 vaccination status',
+    description: 'Whether a COVID-19 vaccine was received.',
+  },
   {
     key: 'aware_of_ppd_symptoms',
     label: 'Aware of PPD symptoms and risk factors',
     hint: 'Awareness of postpartum depression warning signs',
+    description: 'Awareness of postpartum depression symptoms and risk factors.',
   },
   {
     key: 'experienced_cultural_stigma_ppd',
     label: 'Experienced stigma around PPD',
     hint: 'Stigma or judgement within social context',
+    description: 'Whether there has been stigma around postpartum depression.',
   },
   {
     key: 'received_support_or_treatment_ppd',
     label: 'Received support or treatment for PPD',
     hint: 'Any formal or informal care received',
+    description: 'Whether support or treatment for postpartum depression has been received.',
   },
 ]
 
