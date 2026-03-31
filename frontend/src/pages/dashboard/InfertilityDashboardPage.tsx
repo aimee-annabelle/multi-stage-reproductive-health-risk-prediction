@@ -46,13 +46,13 @@ const requiredFields: NumericFieldDef[] = [
     key: 'age',
     label: 'Age',
     placeholder: 'e.g., 28',
-    description: 'Age in years.',
+    description: 'Enter your current age in years. Example: 28.',
   },
   {
     key: 'childrenEverBorn',
     label: 'Children Ever Born',
     placeholder: 'e.g., 0',
-    description: 'Total number of children previously delivered.',
+    description: 'Enter how many children you have given birth to before. Use 0 if none.',
   },
 ]
 
@@ -61,25 +61,25 @@ const historicalFields: NumericFieldDef[] = [
     key: 'bmi',
     label: 'BMI',
     placeholder: 'e.g., 24.5',
-    description: 'Body Mass Index based on height and weight.',
+    description: 'Enter your Body Mass Index if you know it. Example: 24.5.',
   },
   {
     key: 'ageAtFirstMarriage',
     label: 'Age At First Marriage/Cohabitation',
     placeholder: 'e.g., 22',
-    description: 'Age at first marriage or long-term cohabitation.',
+    description: 'Enter the age when you first got married or started long-term cohabitation. Example: 22.',
   },
   {
     key: 'monthsSinceFirstCohabitation',
     label: 'Months Since First Cohabitation',
     placeholder: 'e.g., 96',
-    description: 'Number of months since first cohabitation.',
+    description: 'Enter how many months have passed since first cohabitation. Example: 96 means 8 years.',
   },
   {
     key: 'monthsSinceLastSex',
     label: 'Months Since Last Sexual Intercourse',
     placeholder: 'e.g., 2',
-    description: 'Number of months since last sexual intercourse.',
+    description: 'Enter the number of months since last sexual intercourse. Example: 2.',
   },
 ]
 
@@ -88,60 +88,60 @@ const binaryFields: BinaryFieldDef[] = [
     key: 'irregularMenstrualCycles',
     label: 'Irregular Menstrual Cycles',
     hint: 'Cycle timing pattern over recent months',
-    description: 'Whether menstrual cycles are irregular.',
+    description: 'Choose Yes if cycle timing is often inconsistent, such as coming much earlier or later than expected.',
   },
   {
     key: 'chronicPelvicPain',
     label: 'Chronic Pelvic Pain',
     hint: 'Persistent pain reported for at least 3 months',
-    description: 'Pelvic pain lasting at least several months.',
+    description: 'Choose Yes if there has been ongoing pelvic pain for around 3 months or more.',
   },
   {
     key: 'historyPelvicInfections',
     label: 'History of Pelvic Infections',
     hint: 'Prior diagnosis or treatment history',
-    description: 'Whether there has been a past pelvic infection.',
+    description: 'Choose Yes if there has been a previous pelvic infection diagnosis or treatment history.',
   },
   {
     key: 'hormonalSymptoms',
     label: 'Hormonal Symptoms',
     hint: 'Acne, hair growth changes, or endocrine symptoms',
-    description: 'Symptoms related to hormonal imbalance.',
+    description: 'Choose Yes if there have been hormone-related symptoms such as unusual acne, hair growth changes, or similar signs.',
   },
   {
     key: 'earlyMenopauseSymptoms',
     label: 'Early Menopause Symptoms',
     hint: 'Hot flashes, cycle cessation, or ovarian decline signs',
-    description: 'Symptoms suggesting early menopause.',
+    description: 'Choose Yes if there have been symptoms such as hot flashes, missed periods, or other early menopause signs.',
   },
   {
     key: 'autoimmuneHistory',
     label: 'Autoimmune History',
     hint: 'Known autoimmune condition affecting fertility context',
-    description: 'Whether there is a history of autoimmune disease.',
+    description: 'Choose Yes if there is a diagnosed autoimmune condition, for example lupus, rheumatoid arthritis, or thyroid autoimmunity.',
   },
   {
     key: 'reproductiveSurgeryHistory',
     label: 'Reproductive Surgery History',
     hint: 'Prior gynecologic or reproductive procedures',
-    description: 'Whether there has been surgery involving reproductive organs.',
+    description: 'Choose Yes if there has been past surgery involving reproductive organs, such as fibroid, ovarian, or tubal procedures.',
   },
   {
     key: 'smokedLast12mo',
     label: 'Smoked in Last 12 Months',
     hint: 'Tobacco exposure in previous year',
-    description: 'Whether cigarettes or other tobacco products were used in the past 12 months.',
+    description: 'Choose Yes if cigarettes or other tobacco products were used at any point in the last 12 months.',
   },
   {
     key: 'alcoholLast12mo',
     label: 'Alcohol in Last 12 Months',
     hint: 'Regular alcohol intake within previous year',
-    description: 'Whether alcohol was consumed during the previous 12 months.',
+    description: 'Choose Yes if alcohol was consumed at any point during the last 12 months.',
   },
 ]
 
 const everCohabitedDescription =
-  'Whether there has ever been marriage or long-term cohabitation with a partner.'
+  'Choose Yes if there has ever been marriage or long-term cohabitation with a partner. Choose No if not.'
 
 const initialForm: InfertilityFormValues = {
   age: '',

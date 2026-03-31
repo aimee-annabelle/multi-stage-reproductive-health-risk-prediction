@@ -120,24 +120,24 @@ function recordToFormValues(record: PregnancyAssessmentRecordResponse): Pregnanc
 }
 
 const requiredVitalFields = [
-  { key: 'age', label: 'Age (years)', placeholder: '28', description: 'Current age in years.' },
+  { key: 'age', label: 'Age (years)', placeholder: '28', description: 'Enter your current age in years. Example: 28.' },
   {
     key: 'systolic_bp',
     label: 'Systolic BP (mmHg)',
     placeholder: '120',
-    description: 'Top blood pressure number in mmHg.',
+    description: 'Enter the top blood pressure number in mmHg. Example: 120.',
   },
   {
     key: 'diastolic',
     label: 'Diastolic BP (mmHg)',
     placeholder: '80',
-    description: 'Bottom blood pressure number in mmHg.',
+    description: 'Enter the bottom blood pressure number in mmHg. Example: 80.',
   },
   {
     key: 'gestational_age_weeks',
     label: 'Gestational Age (weeks)',
     placeholder: '28',
-    description: 'Current pregnancy week.',
+    description: 'Enter the current pregnancy week as a number. Example: 28.',
   },
 ] as const
 
@@ -146,25 +146,25 @@ const optionalClinicalFields = [
     key: 'bs',
     label: 'Blood Sugar (bs)',
     placeholder: '6.1',
-    description: 'Blood sugar level.',
+    description: 'Enter your blood sugar reading if available. Example: 6.1.',
   },
   {
     key: 'body_temp',
     label: 'Body Temp (F)',
     placeholder: '98.6',
-    description: 'Body temperature in degrees Fahrenheit.',
+    description: 'Enter body temperature in degrees Fahrenheit. Example: 98.6.',
   },
   {
     key: 'bmi',
     label: 'BMI',
     placeholder: '24.2',
-    description: 'Body Mass Index based on height and weight.',
+    description: 'Enter your Body Mass Index if known. Example: 24.2.',
   },
   {
     key: 'heart_rate',
     label: 'Heart Rate',
     placeholder: '78',
-    description: 'Heart beats per minute.',
+    description: 'Enter heart rate in beats per minute. Example: 78.',
   },
 ] as const
 
@@ -172,29 +172,29 @@ const pregnancyIndicatorFields = [
   {
     key: 'previous_complications',
     label: 'Previous complications',
-    description: 'Whether there have been pregnancy complications before.',
+    description: 'Choose Yes if there have been pregnancy complications before. Choose No if there have not.',
   },
   {
     key: 'preexisting_diabetes',
     label: 'Preexisting diabetes',
-    description: 'Diabetes present before pregnancy.',
+    description: 'Choose Yes if diabetes was present before this pregnancy. Choose No if not.',
   },
   {
     key: 'gestational_diabetes',
     label: 'Gestational diabetes',
-    description: 'Diabetes diagnosed during pregnancy.',
+    description: 'Choose Yes if gestational diabetes has been diagnosed during this pregnancy.',
   },
   {
     key: 'mental_health',
     label: 'Mental health concerns',
-    description: 'Mental or emotional health concerns.',
+    description: 'Choose Yes if there are current mental or emotional health concerns you want reflected in the check-in.',
   },
 ] as const
 
 const pregnancyMetadataDescriptions = {
   visit_label:
-    'Short name for this check-in.',
-  notes: 'Optional notes for this check-in.',
+    'Enter a short name for this visit if you want, for example Baseline, Week 28, or Follow-up 1.',
+  notes: 'Add any optional notes for this check-in, such as symptoms, changes, or reminders.',
 } as const
 
 export default function PregnancyDashboardPage() {

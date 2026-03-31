@@ -24,15 +24,15 @@ import {
 type PostpartumSeverity = 'Low Risk' | 'Medium Risk' | 'High Risk'
 
 const postpartumFieldDescriptions: Record<string, string> = {
-  age_group: 'Age range at the time of assessment.',
-  baby_age_months: 'Baby age in completed months.',
-  kgs_gained_during_pregnancy: 'Kilograms gained during pregnancy.',
-  marital_status: 'Current relationship or marital status.',
-  household_income: 'Household income level.',
-  level_of_education: 'Highest completed education level.',
-  residency: 'Whether residence is in an urban or rural setting.',
-  access_to_healthcare_services: 'How healthcare services were accessed or paid for.',
-  comorbidities: 'Other medical conditions.',
+  age_group: 'Choose the age range that applies at the time of this assessment.',
+  baby_age_months: 'Enter baby age in completed months. Example: enter 3 for a 3-month-old baby.',
+  kgs_gained_during_pregnancy: 'Enter how many kilograms were gained during pregnancy if known. Example: 11.',
+  marital_status: 'Choose the current relationship or marital status that best fits.',
+  household_income: 'Choose the income option that best matches the current household situation.',
+  level_of_education: 'Choose the highest completed level of education.',
+  residency: 'Choose whether current residence is urban or rural.',
+  access_to_healthcare_services: 'Choose the option that best describes how healthcare services were accessed or paid for.',
+  comorbidities: 'Enter other medical conditions if any. Example: hypertension, asthma, or diabetes.',
 }
 
 const postpartumStepOneRequiredProfileFields = ['age_group', 'baby_age_months'] as const
