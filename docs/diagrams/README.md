@@ -2,22 +2,23 @@
 
 This folder is intended to store architecture visuals and UI screenshots for EveBloom documentation.
 
-## Planned / In Progress
+## Available Assets
 
-The following diagrams are planned for this folder:
-
-- `system-architecture.png` — end-to-end component diagram (frontend → backend → ML artifacts → database)
+- `system_architecture.puml` — editable PlantUML source for the layered architecture diagram
+- `system-architecture.png` — exported architecture image used in documentation
 - `erd-diagram.png` — database entity-relationship diagram (users, sessions, assessments)
+- `class-diagram.png` — class diagram image used in report documentation
 - `api-screenshot.png` — Swagger UI screenshot from `http://localhost:8000/docs`
 
 ## Source of Truth
 
-Until diagrams are added, the authoritative references are:
+When updating diagrams, the authoritative references are:
 
 - `backend/main.py` — active route registrations
 - `backend/models/request.py` and `backend/models/response.py` — request/response schemas
 - `docs/API_DOCUMENTATION.md` — full API reference
-- `db/models.py` — database schema
+- `backend/db/models.py` — database schema
+- `backend/services/model_service.py` — runtime artifact loading and model lineage
 
 ## Current Functional Areas
 

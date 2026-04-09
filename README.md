@@ -1,11 +1,33 @@
-# EveBloom - ML-Based Multi-Stage Reproductive Health Risk Prediction System
+# EveBloom - Integrated Multi-Stage Reproductive Health Risk Screening Platform
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-EveBloom is an end-to-end **machine learning system** for reproductive health risk screening across infertility, pregnancy, and postpartum stages. It is designed as a complete ML product workflow: data preparation, model training, artifact versioning, API inference services, and user-facing risk dashboards.
+EveBloom is an end-to-end **machine learning system** for reproductive health risk screening across infertility, pregnancy, and postpartum stages. It combines stage-specific models, API inference services, user authentication, follow-up tracking, and dashboard-based result presentation in one web platform.
+
+The project should be described carefully in documentation: the current implementation is an **integrated multi-stage screening platform**, not a jointly trained longitudinal model. The stages are connected operationally through a shared application workflow and persistent user history, while each prediction model is trained separately on its own dataset and artifacts.
+
+## Start Here
+
+Use this guide depending on what you want to do first:
+
+- **Run the full application locally:** go to [Quick Start (Local)](#quick-start-local) or [Docker Deployment](#docker-deployment)
+- **Understand the repository layout quickly:** see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
+- **Inspect the active backend entry point:** start with `backend/main.py` for the live FastAPI routes
+- **Understand the ML pipelines:** see [notebooks/README.md](notebooks/README.md)
+- **Review datasets and provenance:** see [data/README.md](data/README.md)
+- **Try the API with real payloads:** see [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) and [docs/example_test_payloads.md](docs/example_test_payloads.md)
+- **Review model evaluation evidence:** see [evaluation/](evaluation/) and the stage reports linked below
+
+## Positioning and Current Limits
+
+- **What the platform demonstrates:** stage-specific ML inference, unified web workflows, explainable outputs, and longitudinal storage of pregnancy/postpartum follow-up assessments.
+- **How the stages are connected today:** shared frontend, shared backend services, shared user identity, and shared assessment history.
+- **What it does not yet demonstrate:** a single longitudinal model trained on patient-linked data across infertility, pregnancy, and postpartum stages.
+- **Dataset reality:** infertility uses Kaggle symptom data plus DHS-derived historical features; pregnancy and postpartum use separate public datasets.
+- **Interpretation boundary:** this repository is best presented as a technical proof-of-concept screening platform, not a Rwanda-validated clinical decision system.
 
 ## Deployed Version
 
@@ -26,7 +48,7 @@ EveBloom is not only an application wrapper around static rules. It uses trained
 - **Feature-level interpretability:** top risk factor signals are returned for explainability in the UI.
 - **Model lifecycle support:** training scripts, evaluation reports, and metadata are part of the repo.
 
-## ML Architecture by Stage
+## Stage-Specific Inference Architecture
 
 ### Stage 1: Infertility Risk (Fusion Inference)
 
@@ -71,6 +93,8 @@ multi-stage-reproductive-health-risk-prediction/
 └── requirements.txt
 ```
 
+For a more detailed map of the repo, use [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md). It explains where the active runtime code lives and calls out folders such as `backend/api/routes/` that are retained for reference rather than used by the current app startup path.
+
 ## Product + ML Workflow
 
 1. **Train and evaluate models** with scripts in `notebooks/`.
@@ -78,6 +102,7 @@ multi-stage-reproductive-health-risk-prediction/
 3. **Serve inference** via FastAPI endpoints in `backend/main.py`.
 4. **Capture follow-up assessments** for pregnancy/postpartum longitudinal views.
 5. **Render explainable results** in the React dashboards.
+6. **Review evaluation outputs** in `evaluation/` for confusion matrices, ROC/PR curves, and model comparison artifacts used in report documentation.
 
 ## Quick Start (Local)
 
@@ -170,6 +195,8 @@ docker compose down
 
 ## Current API Surface
 
+Public endpoints in this section can be called without authentication unless noted otherwise.
+
 ### Core
 
 - `GET /`
@@ -177,10 +204,12 @@ docker compose down
 
 ### Authentication
 
-- `POST /auth/signup`
-- `POST /auth/login`
-- `GET /auth/me`
-- `POST /auth/logout`
+- Public:
+  - `POST /auth/signup`
+  - `POST /auth/login`
+- Protected (Bearer token required):
+  - `GET /auth/me`
+  - `POST /auth/logout`
 
 ### Model Metadata
 
@@ -196,6 +225,8 @@ docker compose down
 
 ### Follow-Up APIs
 
+These endpoints are **protected**. Authenticate with `POST /auth/signup` or `POST /auth/login`, then send the returned bearer token in the `Authorization` header.
+
 - Pregnancy:
   - `POST /pregnancy/follow-up/assess`
   - `GET /pregnancy/follow-up/history`
@@ -208,12 +239,18 @@ docker compose down
 
 ## Model Development and Evaluation
 
-Run full pipelines:
+Run the active runtime pipelines:
+
+```bash
+python notebooks/07_infertility_fusion_training.py
+python notebooks/run_pregnancy_v1_pipeline.py
+python notebooks/run_postpartum_v1_pipeline.py
+```
+
+Historical infertility experimentation and baseline/tuning artifacts are also available:
 
 ```bash
 python notebooks/run_infertility_v1_pipeline.py
-python notebooks/run_pregnancy_v1_pipeline.py
-python notebooks/run_postpartum_v1_pipeline.py
 ```
 
 Key outputs:
@@ -223,13 +260,24 @@ Key outputs:
 
 ## Model Performance Summary
 
-| Stage            | Model            | Test Accuracy | Test ROC-AUC | Weighted F1 | Report                                                                         |
-| ---------------- | ---------------- | ------------: | -----------: | ----------: | ------------------------------------------------------------------------------ |
-| Infertility (v1) | GradientBoosting |        0.9266 |       0.9662 |      0.9203 | [INFERTILITY_V1_REPORT.md](evaluation/infertility_v1/INFERTILITY_V1_REPORT.md) |
-| Pregnancy (v1)   | (see report)     |        0.9625 |       0.9997 |           — | [PREGNANCY_V1_REPORT.md](evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md)       |
-| Postpartum (v1)  | RandomForest     |        0.7007 |       0.8561 |      0.7050 | [POSTPARTUM_V1_REPORT.md](evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md)    |
+| Evaluation Lineage | Model / Runtime Role          | Test Accuracy | Test ROC-AUC | Weighted / Positive F1 | Report                                                                         |
+| ------------------ | ----------------------------- | ------------: | -----------: | ---------------------: | ------------------------------------------------------------------------------ |
+| Infertility v1     | GradientBoosting baseline/tuning evaluation |        0.9266 |       0.9662 |                 0.9203 | [INFERTILITY_V1_REPORT.md](evaluation/infertility_v1/INFERTILITY_V1_REPORT.md) |
+| Pregnancy v1       | Threshold-tuned deployment model            |        0.9625 |       0.9997 |                 0.9515 | [PREGNANCY_V1_REPORT.md](evaluation/pregnancy_v1/PREGNANCY_V1_REPORT.md)       |
+| Postpartum v1      | RandomForest screening model               |        0.7007 |       0.8561 |                 0.7050 | [POSTPARTUM_V1_REPORT.md](evaluation/postpartum_v1/POSTPARTUM_V1_REPORT.md)    |
 
-> Note: Postpartum uses a recall-priority threshold (0.33) to maximise screening sensitivity for at-risk cases.
+Notes:
+
+- The deployed infertility endpoint loads `ml/infertility_v2_*` dual-branch fusion artifacts. The checked-in `evaluation/infertility_v1/` directory documents the earlier baseline/tuning workflow that informed the infertility modeling line of work, so the infertility metrics below should be read as documented lineage evidence rather than the exact runtime endpoint scorecard.
+- Pregnancy uses a decision threshold of `0.755` and emergency threshold of `0.90`.
+- Postpartum uses a recall-priority decision threshold of `0.33` to maximise screening sensitivity for at-risk cases.
+- These results are useful for technical evaluation, but they are **not** a substitute for external clinical validation.
+
+### How to Interpret These Results
+
+- **Infertility v1:** the high ROC-AUC (`0.9662`) and weighted F1 (`0.9203`) suggest strong class separation and balanced predictive performance on the symptom-based evaluation dataset. This is encouraging as a modeling baseline, but it comes from the earlier v1 experimentation line with `11` features and a `528 / 177` train-test split, not the deployed v2 fusion endpoint.
+- **Pregnancy v1:** the near-perfect ROC-AUC (`0.9997`) shows the model separates high-risk and low-risk cases very strongly on the held-out test set, while the positive-class F1 (`0.9515`) reflects strong screening performance after threshold tuning. The threshold was deliberately set to support high-risk recall, so this result should be interpreted as strong internal test performance on the available `1169` cleaned rows rather than proof of real-world clinical generalization.
+- **Postpartum v1:** the lower accuracy (`0.7007`) should be read together with the much higher at-risk recall (`0.9074`) and ROC-AUC (`0.8561`). This model is intentionally tuned as a screening-oriented classifier with a low decision threshold, which means it catches most at-risk cases but accepts more false positives; that tradeoff is reasonable for triage support, especially on a smaller `545`-row dataset.
 
 ## Testing
 
@@ -241,6 +289,28 @@ export DATABASE_URL="postgresql+psycopg2://postgres:<password>@localhost:5432/re
 alembic -c backend/alembic.ini upgrade head
 pytest
 ```
+
+The automated tests in this repo validate:
+
+- endpoint behavior and response schemas,
+- authentication and token lifecycle behavior,
+- persistence for pregnancy/postpartum follow-up records,
+- prediction-service logic such as threshold handling and imputation.
+
+The automated tests in this repo do **not** validate:
+
+- clinical effectiveness,
+- external generalization across populations,
+- deployment-scale performance or load handling.
+
+
+## Known Limitations
+
+- The platform integrates three stage-specific models, but they are not jointly trained on patient-linked longitudinal data.
+- Dataset provenance differs across stages, so performance should not be interpreted as Rwanda-specific clinical validity.
+- External validation has not yet been completed.
+- Load testing and realistic deployment-scale benchmarking are not included in this repository.
+- The platform is intended for risk awareness and screening support, not diagnosis.
 
 ## Troubleshooting
 
@@ -264,9 +334,11 @@ Run the backend from the repository root (not from inside `backend/`): `python -
 
 ## Additional Docs
 
+- Repository map: [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
 - Backend details: [backend/README.md](backend/README.md)
 - Frontend details: [frontend/README.md](frontend/README.md)
 - ML training details: [notebooks/README.md](notebooks/README.md)
+- Data details: [data/README.md](data/README.md)
 - API reference: [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
 - Example payloads: [docs/example_test_payloads.md](docs/example_test_payloads.md)
 - Model performance: [evaluation/](evaluation/)
